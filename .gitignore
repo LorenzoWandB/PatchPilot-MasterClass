@@ -1,0 +1,15 @@
+.env
+.marimo/
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.build/
+.coverage
+.idea/
+.vscode/
+*.log
+dist/
+htmlcov/
