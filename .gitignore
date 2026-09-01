@@ -1,5 +1,6 @@
 .env
 .marimo/
+__marimo__/
 .pytest_cache/
 .ruff_cache/
 .venv/
@@ -7,9 +8,12 @@ __pycache__/
 *.py[cod]
 .DS_Store
 .build/
+.tmp/
 .coverage
 .idea/
 .vscode/
 *.log
 dist/
 htmlcov/
+slides/
+tests/

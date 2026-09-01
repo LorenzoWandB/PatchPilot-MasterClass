@@ -1,4 +1,4 @@
-"""Secure first-run configuration and launcher for PatchPilot."""
+"""Secure first-run configuration and launcher for the Agent Loop Workshop."""
 
 from __future__ import annotations
 
@@ -15,7 +15,8 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parent
 ENV_PATH = ROOT / ".env"
 WORKSHOP_PATH = ROOT / "workshop.py"
-DEFAULT_PROJECT = "patchpilot-executive-masterclass"
+TECHNICAL_LAB_PATH = ROOT / "technical_lab.py"
+DEFAULT_PROJECT = "agent-loop-workshop"
 DEFAULT_MODEL = "openai/gpt-oss-20b"
 SAFE_SLUG = re.compile(r"^[A-Za-z0-9_.-]+$")
 SAFE_MODEL = re.compile(r"^[A-Za-z0-9_./-]+$")
@@ -159,7 +160,7 @@ def configure(*, force: bool = False) -> dict[str, str]:
             "Interactive configuration requires a terminal. Run this command in Terminal or PowerShell."
         )
 
-    print("\nPatchPilot first-time setup")
+    print("\nAgent Loop Workshop first-time setup")
     print("Your API key is entered privately and saved only in the local .env file.")
     print("Find or create a key at https://wandb.ai/authorize\n")
 
@@ -201,9 +202,27 @@ def configure(*, force: bool = False) -> dict[str, str]:
     return values
 
 
+def build_launch_command(*, technical: bool = False, headless: bool = False) -> list[str]:
+    """Build the Marimo command for the guided app or editable technical lab."""
+
+    notebook_path = TECHNICAL_LAB_PATH if technical else WORKSHOP_PATH
+    mode = "edit" if technical else "run"
+    command = [
+        sys.executable,
+        "-m",
+        "marimo",
+        mode,
+        str(notebook_path),
+        "--no-sandbox",
+    ]
+    if headless:
+        command.append("--headless")
+    return command
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Configure PatchPilot securely and launch the participant notebook."
+        description="Configure the Agent Loop Workshop and launch its notebook."
     )
     parser.add_argument(
         "--reset",
@@ -219,6 +238,11 @@ def main() -> int:
         "--headless",
         action="store_true",
         help="Start without opening a browser automatically.",
+    )
+    parser.add_argument(
+        "--technical",
+        action="store_true",
+        help="Open the optional technical lab in editable mode.",
     )
     arguments = parser.parse_args()
 
@@ -238,22 +262,24 @@ def main() -> int:
         print("\nNext: uv run --locked python start_workshop.py")
         return 0
 
-    if not WORKSHOP_PATH.is_file():
-        print(f"Workshop notebook not found: {WORKSHOP_PATH}", file=sys.stderr)
+    notebook_path = TECHNICAL_LAB_PATH if arguments.technical else WORKSHOP_PATH
+    if not notebook_path.is_file():
+        print(f"Workshop notebook not found: {notebook_path}", file=sys.stderr)
         return 2
 
-    print("\nStarting PatchPilot. Keep this terminal open during the workshop.")
-    print("After the notebook opens, click Run workshop preflight.\n")
-    command = [
-        sys.executable,
-        "-m",
-        "marimo",
-        "run",
-        str(WORKSHOP_PATH),
-        "--no-sandbox",
-    ]
-    if arguments.headless:
-        command.append("--headless")
+    if arguments.technical:
+        print("\nOpening the optional Agent Loop Technical Lab in editable mode.")
+        print(
+            "Click Run all in the bottom-right, then click Verify W&B, Weave, "
+            "and judge access.\n"
+        )
+    else:
+        print("\nStarting the Agent Loop Workshop. Keep this terminal open during the workshop.")
+        print("After the notebook opens, click Verify W&B, Weave, and judge access.\n")
+    command = build_launch_command(
+        technical=arguments.technical,
+        headless=arguments.headless,
+    )
     try:
         completed = subprocess.run(
             command,

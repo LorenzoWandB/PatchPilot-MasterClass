@@ -12,7 +12,7 @@
 # auto_instantiate = true
 # on_cell_change = "autorun"
 # ///
-"""PatchPilot v1 — evidence before authority."""
+"""Agent Loop Workshop — trace, evaluate, and improve with W&B Weave."""
 
 import marimo
 
@@ -22,18 +22,19 @@ app = marimo.App(width="medium")
 
 @app.cell(hide_code=True)
 def _():
+    import html
+    import inspect
     import json
+    from pathlib import Path
 
     import marimo as mo
     from dotenv import load_dotenv
 
-    from pathlib import Path as _Path
-
-    _local_env = _Path(__file__).with_name(".env")
-    load_dotenv(_local_env if _local_env.exists() else None, override=True)
+    local_env = Path(__file__).with_name(".env")
+    load_dotenv(local_env if local_env.exists() else None, override=True)
     import workshop_core as core
 
-    return core, json, mo
+    return core, html, inspect, json, mo
 
 
 @app.cell(hide_code=True)
@@ -41,42 +42,28 @@ def _(mo):
     mo.Html(
         """
         <style>
-          :root {
-            --ink: #111827;
-            --muted: #64748b;
-            --line: #d8dee8;
-            --paper: #ffffff;
-            --blue: #3b82f6;
-            --amber: #eaa02b;
-            --mint: #159f8c;
-            --rose: #b84735;
-          }
-          .pp-page { padding: 1.25rem 0 .75rem; color: var(--ink); }
-          .pp-kicker { color: var(--rose); font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-          .pp-page h1 { font-size: 2.65rem; line-height: 1.05; margin: .55rem 0 1rem; }
-          .pp-page h2 { font-size: 1.75rem; line-height: 1.15; margin: .4rem 0 .65rem; }
-          .pp-page p { font-size: 1.05rem; line-height: 1.58; }
-          .pp-promise { font-size: 1.28rem !important; max-width: 48rem; }
-          .pp-rail { border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); padding: .7rem 0; margin: 1.2rem 0; color: var(--muted); font-weight: 750; letter-spacing: .02em; }
-          .pp-panel { border-left: 8px solid var(--blue); background: #f7f9fc; padding: 1rem 1.15rem; margin: 1rem 0; }
-          .pp-panel.amber { border-color: var(--amber); }
-          .pp-panel.mint { border-color: var(--mint); }
-          .pp-panel.rose { border-color: var(--rose); }
-          .pp-guide { border: 2px solid #cbd5e1; background: #f8fafc; padding: 1rem 1.15rem; margin: 1rem 0; }
-          .pp-guide > b:first-child, .pp-do > b:first-child { display: block; margin-bottom: .3rem; }
-          .pp-do { border: 2px solid #93c5fd; background: #eff6ff; padding: 1rem 1.15rem; margin: 1rem 0; }
-          .pp-checkpoint { color: #1d4ed8; font-size: .82rem; font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
-          .pp-layer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .8rem; margin: 1rem 0; }
-          .pp-layer > div { border-top: 5px solid var(--blue); background: #f7f9fc; padding: .9rem; min-height: 7.5rem; }
-          .pp-layer > div:nth-child(2) { border-top-color: var(--amber); }
-          .pp-layer > div:nth-child(3) { border-top-color: var(--mint); }
-          .pp-receipt { background: #eef8f5; border: 1px solid #b9e2d9; padding: .9rem 1rem; margin: .9rem 0; }
-          .pp-error { background: #fff2ef; border: 1px solid #efc0b7; padding: .9rem 1rem; margin: .9rem 0; color: #842f23; }
-          .pp-small { color: var(--muted); font-size: .9rem; }
-          .pp-verdict-pass { color: var(--mint); font-weight: 800; text-transform: uppercase; }
-          .pp-verdict-review { color: var(--amber); font-weight: 800; text-transform: uppercase; }
-          .pp-verdict-block { color: var(--rose); font-weight: 800; text-transform: uppercase; }
-          table { font-size: .95rem; }
+          :root { --ink:#111827; --muted:#64748b; --line:#d8dee8; --blue:#2563eb; --amber:#d97706; --mint:#0f9f86; --rose:#b84735; }
+          .loop-page { padding:1.2rem 0 .8rem; color:var(--ink); }
+          .loop-page h1 { font-size:2.6rem; line-height:1.05; margin:.45rem 0 1rem; }
+          .loop-page h2 { font-size:1.75rem; line-height:1.15; margin:.35rem 0 .65rem; }
+          .loop-page p { font-size:1.03rem; line-height:1.56; }
+          .loop-kicker { color:var(--rose); font-size:.78rem; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
+          .loop-rail { border-top:2px solid var(--line); border-bottom:2px solid var(--line); padding:.75rem 0; margin:1.1rem 0; color:var(--muted); font-weight:750; }
+          .loop-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; margin:1rem 0; }
+          .loop-grid > div { border-top:5px solid var(--blue); background:#f7f9fc; padding:.9rem; min-height:6.7rem; }
+          .loop-grid > div:nth-child(2) { border-top-color:var(--amber); }
+          .loop-grid > div:nth-child(3) { border-top-color:var(--mint); }
+          .loop-panel { border-left:8px solid var(--blue); background:#f7f9fc; padding:1rem 1.15rem; margin:1rem 0; }
+          .loop-panel.amber { border-color:var(--amber); }
+          .loop-panel.mint { border-color:var(--mint); }
+          .loop-panel.rose { border-color:var(--rose); }
+          .loop-do { border:2px solid #93c5fd; background:#eff6ff; padding:1rem 1.15rem; margin:1rem 0; }
+          .loop-receipt { background:#eef8f5; border:1px solid #b9e2d9; padding:.9rem 1rem; margin:.9rem 0; }
+          .loop-error { background:#fff2ef; border:1px solid #efc0b7; padding:.9rem 1rem; margin:.9rem 0; color:#842f23; }
+          .loop-small { color:var(--muted); font-size:.91rem; }
+          .loop-code { border:1px solid var(--line); background:#f8fafc; padding:.75rem 1rem; }
+          table { font-size:.93rem; }
+          @media (max-width:800px) { .loop-grid { grid-template-columns:1fr; } }
         </style>
         """
     )
@@ -87,12 +74,13 @@ def _(mo):
 def _(mo):
     mo.Html(
         """
-        <header class="pp-page">
-          <div class="pp-kicker">PatchPilot · Executive masterclass · 90 minutes</div>
-          <h1>Evidence before authority</h1>
-          <p class="pp-promise">By the end, you will be able to inspect an AI-agent run, test it against business rules, and defend whether it should operate automatically, require review, or remain blocked.</p>
-          <div class="pp-rail">TRACE THE RUN &nbsp;→&nbsp; TEST THE SYSTEM &nbsp;→&nbsp; DEFINE GOOD &nbsp;→&nbsp; BOUND THE AUTHORITY</div>
-          <p class="pp-small">PatchPilot is fictional. The retail incident and failure modes are synthetic; the W&amp;B traces, evaluations, and judge calls are real.</p>
+        <header class="loop-page">
+          <div class="loop-kicker">Agent Loop Workshop · 90 minutes</div>
+          <h1>Trace, evaluate, and improve an AI agent</h1>
+          <p>Follow one PatchPilot coding agent from a green-looking patch to a measured improvement—and decide where a person should remain in the loop.</p>
+          <div class="loop-rail">RUN → TRACE → BUILD A DATASET → EVALUATE → IMPROVE → COMPARE → DECIDE</div>
+          <p><b>W&amp;B Weave</b> is an observability and evaluation platform that helps teams track, evaluate, and improve AI applications.</p>
+          <p class="loop-small">PatchPilot and BeeVerse Market are fictional. The Weave traces, calls, dataset, evaluation runs, annotations, and live W&amp;B Inference judge calls are real.</p>
         </header>
         """
     )
@@ -103,36 +91,16 @@ def _(mo):
 def _(mo):
     mo.Html(
         """
-        <section class="pp-page">
-          <div class="pp-kicker">Before we begin</div>
-          <h2>We are building evidence for an operating decision</h2>
-          <p><b>Weave</b> is the evidence layer for this workshop: it records traces, runs evaluations, applies scorers, and lets us compare results.</p>
-          <p><b>PatchPilot</b> is a fictional coding agent. It repairs Northstar Retail's bulk-close support workflow, runs visible checks, and submits a patch for review. It never deploys during this exercise.</p>
-          <div class="pp-layer">
-            <div><b>Start with</b><br>One apparently successful agent run and a decision about how much authority you would grant.</div>
-            <div><b>Build</b><br>A trace, a four-case evaluation, an LLM-judge scorer, and one business rule you can defend.</div>
-            <div><b>Leave with</b><br>A bounded decision: operate automatically, require human review, or remain blocked.</div>
+        <section class="loop-page">
+          <div class="loop-kicker">The use case</div>
+          <h2>BeeVerse needs a safe fix before its seasonal sale</h2>
+          <p>BeeVerse Market runs merchant-support software. Its bulk-close workflow is broken, and PatchPilot has prepared a one-file repair.</p>
+          <div class="loop-grid">
+            <div><b>What PatchPilot does</b><br>Reads the issue, inspects the workflow, proposes a code change, and runs checks.</div>
+            <div><b>What could go wrong</b><br>A request for one merchant could change a ticket belonging to another merchant.</div>
+            <div><b>What we decide</b><br>Allow automatic operation, require human review, or keep the agent blocked.</div>
           </div>
-        </section>
-        """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.Html(
-        """
-        <section class="pp-page">
-          <div class="pp-kicker">How we will work</div>
-          <h2>This is a guided evidence lab</h2>
-          <div class="pp-layer">
-            <div><b>Follow</b><br>The facilitator explains one concept and shows the code that creates the evidence.</div>
-            <div><b>Try</b><br>You use bounded controls to predict, inspect, revise a rubric, and make a decision.</div>
-            <div><b>Inspect</b><br>The room opens the matching trace, scorer call, or evaluation in Weave together.</div>
-          </div>
-          <div class="pp-guide"><b>Stay with the facilitator.</b> You can work in your own notebook while the shared screen moves through the same path. The code is visible for explanation; the live changes stay focused on the business rubric.</div>
-          <p class="pp-small">No partner work, breakout room, chat response, or Python editing is required.</p>
+          <div class="loop-panel amber"><b>Production versus today</b><br>In a production workflow, the first part of this chain would also be live: a model would choose tools, inspect files, propose edits, and run tests. We have fixed that layer today so we can focus on evaluating the result.</div>
         </section>
         """
     )
@@ -146,33 +114,25 @@ def _(core):
 
 
 @app.cell(hide_code=True)
-def _(config_status, mo):
-    import html as _html
-
-    _configured = "Configured" if config_status["ready"] else "Needs setup"
+def _(config_status, core, html, mo, preflight_error, preflight_receipt):
+    _readiness = core.workshop_readiness(
+        config_status,
+        preflight_receipt=preflight_receipt,
+        preflight_error=preflight_error,
+    )
     _missing = ", ".join(config_status["missing"]) or "none"
     _invalid = "; ".join(config_status["invalid"]) or "none"
-    _notices = "".join(
-        f'<div class="pp-panel amber"><b>Adjusted automatically.</b> {_html.escape(note)}</div>'
-        for note in config_status["notices"]
-    )
     mo.Html(
         f"""
-        <section class="pp-page">
-          <div class="pp-kicker">Preflight</div>
+        <section class="loop-page">
+          <div class="loop-kicker">Preflight</div>
           <h2>Verify the workshop connection</h2>
-          <div class="pp-panel {'mint' if config_status['ready'] else 'rose'}">
-            <b>{_configured}</b><br>
-            Entity: <code>{_html.escape(config_status['entity'] or '(missing)')}</code><br>
-            Project: <code>{_html.escape(config_status['project'] or '(missing)')}</code><br>
-            Judge: <code>{_html.escape(config_status['judge_model'])}</code><br>
-            Missing: <code>{_html.escape(_missing)}</code><br>
-            Invalid: <code>{_html.escape(_invalid)}</code>
-          </div>
-          {_notices}
-          <div class="pp-guide"><span class="pp-checkpoint">Before the session</span><br>The panel says <b>Configured</b> when the required settings are usable. Click <b>Run workshop preflight</b>; continue only after the receipt confirms both <b>Weave</b> and the <b>judge model</b>. Do not install software or troubleshoot API keys during the workshop.</div>
-          <p>Your API key is read from <code>.env</code>. It is never displayed or placed in a trace.</p>
-          <p class="pp-small"><b>Running this yourself:</b> create a W&amp;B account and API key, copy <code>.env.example</code> to <code>.env</code>, add your key and entity, then launch with <code>uv run marimo run workshop.py</code>.</p>
+          <div class="loop-panel {_readiness['tone']}"><b>{_readiness['title']}</b><br>
+          Entity: <code>{html.escape(config_status['entity'])}</code><br>
+          Project: <code>{html.escape(config_status['project'])}</code><br>
+          Judge: <code>{html.escape(config_status['judge_model'])}</code><br>
+          Missing: {html.escape(_missing)}<br>Invalid: {html.escape(_invalid)}</div>
+          <p class="loop-small">The API key remains in your local <code>.env</code>. It is never displayed or placed in a trace. Local setup and a verified notebook connection do not sign this browser into wandb.ai.</p>
         </section>
         """
     )
@@ -181,41 +141,36 @@ def _(config_status, mo):
 
 @app.cell(hide_code=True)
 def _(config_status, mo):
-    connect_button = mo.ui.run_button(
-        label="Run workshop preflight",
+    preflight_button = mo.ui.run_button(
+        label="Verify W&B, Weave, and judge access",
         disabled=not config_status["ready"],
     )
-    connect_button
-    return (connect_button,)
+    preflight_button
+    return (preflight_button,)
 
 
 @app.cell(hide_code=True)
-async def _(connect_button, core):
-    connection_error = ""
-    connection_receipt = None
-    if connect_button.value:
+async def _(core, preflight_button):
+    preflight_error = ""
+    preflight_receipt = None
+    if preflight_button.value:
         try:
-            connection_receipt = await core.verify_workshop_connection()
+            preflight_receipt = await core.verify_workshop_connection()
         except Exception as error:
-            connection_error = core.safe_error_text(error)
-    return connection_error, connection_receipt
+            preflight_error = core.safe_error_text(error)
+    return preflight_error, preflight_receipt
 
 
 @app.cell(hide_code=True)
-def _(connection_error, connection_receipt, core, mo):
-    import html as _html
-
-    if connection_receipt:
+def _(core, html, mo, preflight_error, preflight_receipt):
+    if preflight_receipt:
+        _url = html.escape(preflight_receipt["project_url"], quote=True)
         _view = mo.Html(
-            f"""<div class="pp-receipt"><b>Ready for the workshop.</b><br>
-            Weave destination: <code>{_html.escape(connection_receipt['entity'])}/{_html.escape(connection_receipt['project'])}</code><br>
-            Judge model: <code>{_html.escape(connection_receipt['judge_model'])}</code> — reachable.</div>"""
+            f'<div class="loop-receipt"><b>Notebook connection verified.</b> W&amp;B authentication, the Weave project, and the live LLM judge responded successfully.<br><a href="{_url}" target="_blank" rel="noopener noreferrer">Open the project in Weave ↗</a><br><span class="loop-small">You must be signed into wandb.ai in this browser to open private project links.</span></div>'
         )
-    elif connection_error:
-        _guidance = core.connection_error_guidance(RuntimeError(connection_error))
+    elif preflight_error:
         _view = mo.Html(
-            f'<div class="pp-error"><b>Preflight failed.</b> {_html.escape(connection_error)}'
-            f'<br><b>Next step:</b> {_html.escape(_guidance)}</div>'
+            f'<div class="loop-error"><b>Preflight failed.</b> {html.escape(preflight_error)}<br><b>Next step:</b> {html.escape(core.connection_error_guidance(RuntimeError(preflight_error)))}</div>'
         )
     else:
         _view = mo.Html("")
@@ -224,37 +179,14 @@ def _(connection_error, connection_receipt, core, mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    participant_role = mo.ui.dropdown(
-        options={
-            "Customer support leader": "support",
-            "Risk or compliance leader": "risk",
-            "Product leader": "product",
-            "Engineering leader": "engineering",
-        },
-        value="Customer support leader",
-        label="Choose the perspective you want to use during the workshop",
-    )
-    participant_role
-    return (participant_role,)
-
-
-@app.cell(hide_code=True)
-def _(mo, participant_role):
-    _questions = {
-        "support": "Would this behavior protect customer trust during a high-volume support event?",
-        "risk": "Which outcome would be unacceptable even if the average result looked good?",
-        "product": "What narrow customer value is worth automating, and what must remain bounded?",
-        "engineering": "What evidence would justify turning this business rule into a protected test?",
-    }
-    mo.Html(
-        f'<div class="pp-panel"><b>Your lens:</b> {_questions[participant_role.value]}</div>'
-    )
-    return
+def _(preflight_receipt):
+    connection_verified = preflight_receipt is not None
+    return (connection_verified,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
+    participant_role = "cross_functional_reviewer"
     initial_decision = mo.ui.radio(
         options={
             "Allow automatic operation": "automatic",
@@ -262,42 +194,28 @@ def _(mo):
             "Keep the agent blocked": "block",
         },
         value="Require human review",
-        label="Before seeing the evidence, what authority would you grant?",
-    )
-    opening_evidence = mo.ui.text_area(
-        label="What evidence could change your mind?",
-        placeholder="For example: proof that retries are safe and customer accounts stay isolated…",
-        rows=2,
+        label="Before seeing more evidence, what should happen?",
     )
     mo.vstack(
         [
             mo.Html(
-                """
-                <section class="pp-page">
-                  <div class="pp-kicker">Opening decision</div>
-                  <h2>A green patch is waiting</h2>
-                  <p>Northstar Retail asked PatchPilot to repair a bulk-close support workflow. The agent changed one file, passed three visible checks, and submitted the patch for review.</p>
-                  <div class="pp-do"><b>Your turn · 2 minutes</b>Choose automatic, review, or block. Then record one piece of evidence that could change your mind.</div>
-                </section>
-                """
+                '<section class="loop-page"><div class="loop-kicker">Opening decision</div><h2>The visible checks passed. Is that enough?</h2><p>You are the cross-functional reviewer: connect the business requirement to the engineering evidence.</p><div class="loop-do"><b>Your turn · 1 minute</b><br>Make the initial human-in-the-loop decision before seeing more evidence.</div></section>'
             ),
             initial_decision,
-            opening_evidence,
         ]
     )
-    return initial_decision, opening_evidence
+    return initial_decision, participant_role
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.Html(
         """
-        <section class="pp-page">
-          <div class="pp-kicker">Chapter 1 · Trace the run</div>
-          <h2>A trace is the saved receipt for one execution</h2>
-          <p>It shows the inputs, outputs, and explicit tool steps that were recorded. It does not prove that the same behavior will be safe on another case, and it does not expose hidden chain-of-thought.</p>
-          <div class="pp-guide"><span class="pp-checkpoint">Weave UI stop 1 · Read the trace</span><br>In the Trace view, locate the <b>request</b>, open one recorded <b>action</b>, and find the final <b>output</b>. Then name one claim this single run cannot support.</div>
-          <div class="pp-do"><b>Your turn · 4 minutes</b>Run the episode, open its Weave trace, and find: <b>1)</b> what the agent received, <b>2)</b> one action it took, and <b>3)</b> what it returned.</div>
+        <section class="loop-page">
+          <div class="loop-kicker">Chapter 1 · Trace</div>
+          <h2>Start with the receipt for one run</h2>
+          <p>A <b>trace</b> is the end-to-end record of one run. It contains a hierarchy of <b>calls</b>: the tracked operations or steps inside that run.</p>
+          <div class="loop-panel"><b>What to look for in Weave</b><br>Open the root call, expand its child calls, and inspect the inputs, outputs, query filter, timing, and the checks that were—and were not—run.</div>
         </section>
         """
     )
@@ -305,24 +223,50 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo, participant_role):
-    _trace_lens = {
-        "support": "Which recorded action could affect customer trust?",
-        "risk": "Which safety claim is still unsupported by this one run?",
-        "product": "Which customer outcome is directly visible in the trace?",
-        "engineering": "Which operation or check would you inspect first?",
-    }
-    mo.Html(
-        f'<div class="pp-panel"><b>Your role lens:</b> {_trace_lens[participant_role.value]}</div>'
+def _(mo):
+    _markdown = "\n".join(
+        [
+            "### The actual tracing runtime",
+            "",
+            "**Read-only excerpt from `workshop_core.py`.** The run button below executes this implementation. Supporting operations are defined immediately above this excerpt in the source file.",
+            "",
+            "```python",
+            '@weave.op(name="patchpilot_prepare_v1_patch")',
+            "def prepare_patch(",
+            "    issue: dict[str, Any], workflow: dict[str, Any]",
+            ") -> dict[str, Any]:",
+            "    return {",
+            '        "agent_version": "v1",',
+            '        "file": workflow["path"],',
+            '        "query_filter": "ticket_id IN requested_ticket_ids",',
+            '        "customer_constraint": "not included",',
+            '        "summary": "Close the selected tickets and preserve the review step.",',
+            '        "issue_id": issue["issue_id"],',
+            "    }",
+            "",
+            '@weave.op(name="patchpilot_v1_agent_episode")',
+            "async def run_episode() -> dict[str, Any]:",
+            '    issue = read_issue("BV-418")',
+            '    workflow = inspect_workflow("support_workflows/bulk_close.py")',
+            "    patch = prepare_patch(issue, workflow)",
+            "    checks = run_visible_checks(patch)",
+            "    return submit(patch, checks)",
+            "",
+            "result, call = await run_episode.call()",
+            "```",
+            "",
+            "`@weave.op` records each decorated function as a Call. Calling `.call()` returns both the application result and the root Call object used for the Weave link and annotations.",
+        ]
     )
+    mo.md(_markdown)
     return
 
 
 @app.cell(hide_code=True)
-def _(config_status, mo):
+def _(connection_verified, mo):
     trace_button = mo.ui.run_button(
-        label="Run the saved PP-418 episode",
-        disabled=not config_status["ready"],
+        label="Run PatchPilot Version 1 and create the trace",
+        disabled=not connection_verified,
     )
     trace_button
     return (trace_button,)
@@ -341,47 +285,73 @@ async def _(core, trace_button):
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    observed = mo.ui.text_area(
-        label="What did you directly observe?",
-        placeholder="I observed that the agent read…",
-        rows=3,
-    )
-    inferred = mo.ui.text_area(
-        label="What are you inferring that the trace cannot prove?",
-        placeholder="This does not yet prove that…",
-        rows=3,
-    )
-    return inferred, observed
-
-
-@app.cell(hide_code=True)
-def _(inferred, mo, observed, trace_error, trace_receipt):
-    import html as _html
-
+def _(html, mo, trace_error, trace_receipt):
     if trace_receipt:
-        _result = trace_receipt["result"]
-        _status = _html.escape(str(_result["status"]))
-        _passed = _html.escape(str(_result["visible_checks"]["passed"]))
-        _total = _html.escape(str(_result["visible_checks"]["total"]))
-        _trace_url = _html.escape(str(trace_receipt["trace_url"]), quote=True)
-        _view = mo.vstack(
-            [
-                mo.Html(
-                    f"""
-                    <div class="pp-receipt">
-                      <b>Saved run:</b> {_status} · {_passed} of {_total} visible checks passed.<br>
-                      <a href="{_trace_url}" target="_blank" rel="noopener noreferrer">Open the exact Weave trace ↗</a>
-                    </div>
-                    """
-                ),
-                observed,
-                inferred,
-            ]
+        _url = html.escape(trace_receipt["trace_url"], quote=True)
+        _view = mo.Html(
+            f'<div class="loop-receipt"><b>Version 1 trace saved.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the trace in Weave ↗</a><br><span class="loop-small">Find the input, the child calls, the query filter, and what the visible checks did not cover.</span></div>'
         )
     elif trace_error:
         _view = mo.Html(
-            f'<div class="pp-error"><b>The trace did not complete.</b> {_html.escape(trace_error)}</div>'
+            f'<div class="loop-error"><b>The trace did not complete.</b> {html.escape(trace_error)}</div>'
+        )
+    else:
+        _view = mo.Html("")
+    _view
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo, trace_receipt):
+    observed_risk = mo.ui.radio(
+        options={
+            "Customer isolation": "customer_isolation",
+            "Retry safety": "retry_safety",
+            "Missing evidence": "missing_evidence",
+            "No material concern": "no_material_concern",
+        },
+        value="Customer isolation",
+        label="What is the primary risk you observed?",
+    )
+    save_risk_button = mo.ui.run_button(
+        label="Save this annotation to the trace",
+        disabled=trace_receipt is None,
+    )
+    mo.vstack(
+        [
+            mo.Html(
+                '<div class="loop-do"><b>Your turn · 1 minute</b><br>Select the risk supported by the trace. This becomes a structured human annotation attached to the root Call in Weave, and it guides the dataset case we build next.</div>'
+            ),
+            observed_risk,
+            save_risk_button,
+        ]
+    )
+    return observed_risk, save_risk_button
+
+
+@app.cell(hide_code=True)
+def _(core, observed_risk, save_risk_button, trace_receipt):
+    risk_annotation_error = ""
+    risk_annotation_receipt = None
+    if save_risk_button.value and trace_receipt:
+        try:
+            risk_annotation_receipt = core.annotate_trace_risk(
+                trace_receipt["call_id"], observed_risk.value
+            )
+        except Exception as error:
+            risk_annotation_error = core.safe_error_text(error)
+    return risk_annotation_error, risk_annotation_receipt
+
+
+@app.cell(hide_code=True)
+def _(html, mo, risk_annotation_error, risk_annotation_receipt):
+    if risk_annotation_receipt:
+        _view = mo.Html(
+            '<div class="loop-receipt"><b>Annotation saved.</b> The human observation now sits beside the machine-generated trace.</div>'
+        )
+    elif risk_annotation_error:
+        _view = mo.Html(
+            f'<div class="loop-error"><b>The annotation was not saved.</b> {html.escape(risk_annotation_error)}</div>'
         )
     else:
         _view = mo.Html("")
@@ -391,75 +361,125 @@ def _(inferred, mo, observed, trace_error, trace_receipt):
 
 @app.cell(hide_code=True)
 def _(mo):
-    trace_claims = mo.ui.multiselect(
-        options=[
-            "The agent read PP-418",
-            "Three visible checks ran",
-            "The patch was submitted for review",
-            "Retries are safe",
-            "No other customer can be affected",
-            "The workflow will be safe in production",
-        ],
-        value=[],
-        label="Trace challenge: select only the claims this one run directly proves",
+    mo.Html(
+        """
+        <section class="loop-page">
+          <div class="loop-kicker">Chapter 2 · Dataset</div>
+          <h2>One trace becomes a repeatable test</h2>
+          <p>A <b>dataset</b> is a versioned collection of cases used to test behavior repeatedly. Historical cases preserve what actually happened. Synthetic cases deliberately probe boundaries that may be rare but costly.</p>
+          <div class="loop-panel amber"><b>Why this matters for AI systems</b><br>A single successful run does not establish consistent behavior. The dataset lets us rerun the same business expectations after a model, prompt, tool, retrieval, skill, or code change.</div>
+        </section>
+        """
     )
-    trace_claims
-    return (trace_claims,)
-
-
-@app.cell(hide_code=True)
-def _(mo, trace_claims):
-    _proven = {
-        "The agent read PP-418",
-        "Three visible checks ran",
-        "The patch was submitted for review",
-    }
-    _selected = set(trace_claims.value)
-    if not _selected:
-        _view = mo.Html(
-            '<div class="pp-panel amber">Make a selection, then compare what the trace records with what you are assuming.</div>'
-        )
-    elif _selected == _proven:
-        _view = mo.Html(
-            '<div class="pp-panel mint"><b>Evidence disciplined.</b> Those three claims are recorded; repeatability, customer isolation, and production safety still require evaluation.</div>'
-        )
-    else:
-        _missed = sorted(_proven - _selected)
-        _unsupported = sorted(_selected - _proven)
-        _view = mo.Html(
-            '<div class="pp-panel rose"><b>Pressure-test the claim.</b><br>'
-            + (f"Recorded but not selected: {', '.join(_missed)}.<br>" if _missed else "")
-            + (f"Not proven by this run: {', '.join(_unsupported)}." if _unsupported else "")
-            + "</div>"
-        )
-    _view
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    _source = "\n".join(
-        [
-            '@weave.op(name="patchpilot_pp418_saved_episode")',
-            "async def replay():",
-            '    issue = read_support_issue("PP-418")',
-            '    workflow = inspect_workflow("support_workflows/bulk_close.py")',
-            "    patch = propose_patch(issue, workflow)",
-            "    checks = run_visible_checks(patch)",
-            "    return submit_for_review(patch, checks)",
-            "",
-            "result, call = await replay.call()",
-            "trace_url = str(call.ui_url)",
-        ]
+    source_strategy = mo.ui.dropdown(
+        options={
+            "Synthetic edge case": "synthetic",
+            "Sanitized pattern from a past incident": "sanitized_pattern",
+        },
+        value="Synthetic edge case",
+        label="How would your team source this kind of case?",
+    )
+    boundary_shape = mo.ui.dropdown(
+        options={
+            "One ticket belongs to another customer": "one_foreign_ticket",
+            "Two tickets belong to another customer": "two_foreign_tickets",
+        },
+        value="One ticket belongs to another customer",
+        label="Mixed-customer test shape",
     )
     mo.vstack(
         [
             mo.Html(
-                '<div class="pp-guide"><b>Code walkthrough · tracing</b>The functions decorated with <code>@weave.op</code> become the nested operations you just inspected. The API key is not an operation argument.</div>'
+                '<div class="loop-do"><b>Your turn · 2 minutes</b><br>Configure the customer-boundary case. You are changing structured test inputs—not writing an answer that disappears when the notebook closes.</div>'
             ),
-            mo.md(f"```python\n{_source}\n```"),
+            source_strategy,
+            boundary_shape,
         ]
     )
+    return boundary_shape, source_strategy
+
+
+@app.cell(hide_code=True)
+def _(boundary_shape, core, source_strategy):
+    participant_case = core.build_participant_case(
+        source_strategy=source_strategy.value,
+        boundary_shape=boundary_shape.value,
+    )
+    dataset_rows = core.workshop_dataset_rows(participant_case)
+    dataset_version = core.dataset_fingerprint(dataset_rows)
+    return dataset_rows, dataset_version, participant_case
+
+
+@app.cell(hide_code=True)
+def _(dataset_rows, dataset_version, json, mo, participant_case):
+    _titles = "\n".join(
+        f"- **{row['title']}** — {row['risk']} ({row['source_type']})"
+        for row in dataset_rows
+    )
+    mo.vstack(
+        [
+            mo.md(
+                f"""
+### Your four-case dataset
+
+{_titles}
+
+Dataset fingerprint: `{dataset_version}`
+                """
+            ),
+            mo.accordion(
+                {
+                    "Inspect the structured participant case": mo.md(
+                        f"```json\n{json.dumps(participant_case, indent=2)}\n```"
+                    )
+                }
+            ),
+        ]
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(connection_verified, mo):
+    publish_dataset_button = mo.ui.run_button(
+        label="Publish this dataset to Weave",
+        disabled=not connection_verified,
+    )
+    publish_dataset_button
+    return (publish_dataset_button,)
+
+
+@app.cell(hide_code=True)
+def _(core, dataset_rows, publish_dataset_button):
+    dataset_error = ""
+    dataset_receipt = None
+    if publish_dataset_button.value:
+        try:
+            dataset_receipt = core.publish_workshop_dataset(dataset_rows)
+        except Exception as error:
+            dataset_error = core.safe_error_text(error)
+    return dataset_error, dataset_receipt
+
+
+@app.cell(hide_code=True)
+def _(dataset_error, dataset_receipt, html, mo):
+    if dataset_receipt:
+        _url = html.escape(dataset_receipt["dataset_url"], quote=True)
+        _view = mo.Html(
+            f'<div class="loop-receipt"><b>Dataset published.</b> {dataset_receipt["row_count"]} cases · version <code>{dataset_receipt["fingerprint"]}</code> · <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the dataset in Weave ↗</a></div>'
+        )
+    elif dataset_error:
+        _view = mo.Html(
+            f'<div class="loop-error"><b>The dataset was not published.</b> {html.escape(dataset_error)}</div>'
+        )
+    else:
+        _view = mo.Html("")
+    _view
     return
 
 
@@ -467,13 +487,15 @@ def _(mo):
 def _(mo):
     mo.Html(
         """
-        <section class="pp-page">
-          <div class="pp-kicker">Chapter 2 · Test the system</div>
-          <h2>One successful run is not a quality claim</h2>
-          <p>A dataset is the collection of situations the organization chose to test. This evaluation replays four fixed cases so the room can compare the same evidence under two definitions of acceptable behavior.</p>
-          <div class="pp-panel amber"><b>Baseline rubric:</b> Did the workflow change? Did the visible checks pass? Is the patch summary clear?</div>
-          <div class="pp-guide"><span class="pp-checkpoint">Facilitator checkpoint</span><br>Walk through the four cases together. Then each participant can choose any case to inspect more closely.</div>
-          <div class="pp-do"><b>Your turn · 5 minutes</b>Inspect one case, predict its outcome, and name one important situation this four-case dataset still does not cover.</div>
+        <section class="loop-page">
+          <div class="loop-kicker">Chapter 3 · Evaluation</div>
+          <h2>Define “good” before comparing versions</h2>
+          <div class="loop-grid">
+            <div><b>Scorer</b><br>A function or class that analyzes an output and returns one or more metrics.</div>
+            <div><b>Evaluation</b><br>A reusable setup containing a dataset, scorers, and optional configuration.</div>
+            <div><b>LLM judge</b><br>A model-powered scorer that applies written scoring criteria to recorded evidence.</div>
+          </div>
+          <p>A <b>rubric</b> is the written scoring criteria supplied to the judge. Each time we run the evaluation setup against an application version, Weave creates an <b>evaluation run</b>. The judge is one scorer inside that setup; it is not the human release decision.</p>
         </section>
         """
     )
@@ -482,115 +504,171 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(core, mo):
-    case_choice = mo.ui.dropdown(
-        options={row["title"]: row["case_id"] for row in core.load_cases()},
-        value="Routine close stays inside the account",
-        label="Choose the case you selected or were assigned",
+    deterministic_scorers = mo.ui.multiselect(
+        options={label: scorer_id for scorer_id, label in core.DETERMINISTIC_SCORER_LABELS.items()},
+        value=list(core.DETERMINISTIC_SCORER_LABELS.values()),
+        label="Custom Python scorers (deterministic logic)",
     )
-    show_raw_evidence = mo.ui.checkbox(
-        label="Show the recorded evidence the judge will receive",
-        value=False,
-    )
-    missing_dataset_case = mo.ui.text_area(
-        label="One important situation this dataset still does not cover",
-        placeholder="For example: a partial outage occurs after the first write…",
-        rows=2,
+    freeze_evaluation = mo.ui.checkbox(
+        value=True,
+        label="Use the same evaluation setup for both application versions",
     )
     mo.vstack(
         [
-            case_choice,
-            show_raw_evidence,
-            missing_dataset_case,
+            mo.Html(
+                '<div class="loop-do"><b>Your turn · 2 minutes</b><br>Review the three fixed checks and confirm the comparison contract. Keep all three selected for the shared workshop path.</div>'
+            ),
+            deterministic_scorers,
+            freeze_evaluation,
         ]
     )
-    return case_choice, missing_dataset_case, show_raw_evidence
+    return deterministic_scorers, freeze_evaluation
 
 
 @app.cell(hide_code=True)
-def _(case_choice, core, json, mo, show_raw_evidence):
-    import html as _html
-
-    _cases = {row["case_id"]: row for row in core.load_cases()}
-    _case = _cases[case_choice.value]
-    _summary = mo.Html(
-        f"""
-        <div class="pp-panel">
-          <b>{_html.escape(str(_case['title']))}</b><br>
-          {_html.escape(str(_case['scenario']))}<br><br>
-          <b>Risk represented:</b> {_html.escape(str(_case['risk']))}<br>
-          <b>Business question:</b> {_html.escape(str(_case['business_question']))}<br><br>
-          <span class="pp-small">The expected outcome is deliberately hidden here. Make your call before running the judge.</span>
-        </div>
-        """
+def _(core, json, mo):
+    rubric = core.load_rubric()
+    mo.accordion(
+        {
+            "See the fixed rubric used by the live LLM judge": mo.md(
+                f"```json\n{json.dumps(rubric, indent=2)}\n```"
+            )
+        }
     )
-    if show_raw_evidence.value:
+    return (rubric,)
+
+
+@app.cell(hide_code=True)
+def _(core, inspect, mo):
+    _python_scorer_source = "\n\n".join(
+        [
+            inspect.getsource(core._deterministic_status),
+            inspect.getsource(core.customer_isolation_scorer),
+        ]
+    )
+    _judge_source = inspect.getsource(core.BusinessRubricJudge)
+    _evaluation_source = "\n\n".join(
+        [
+            inspect.getsource(core.run_application_evaluation),
+            inspect.getsource(core.run_evaluation),
+        ]
+    )
+    mo.vstack(
+        [
+            mo.md(
+                """
+### The actual scorer and evaluation runtime
+
+These are **read-only sources loaded directly from `workshop_core.py`**, the
+same implementation called by the evaluation buttons. The code is collapsed
+by default so the shared discussion can stay focused; expand any section when
+the room wants the technical detail.
+                """
+            ),
+            mo.accordion(
+                {
+                    "Exact Python scorer implementation": mo.md(
+                        f"```python\n{_python_scorer_source}\n```"
+                    ),
+                    "Exact live LLM-judge implementation": mo.md(
+                        f"```python\n{_judge_source}\n```"
+                    ),
+                    "Exact evaluation setup and execution": mo.md(
+                        f"```python\n{_evaluation_source}\n```"
+                    ),
+                }
+            ),
+            mo.md(
+                "The function-based scorers use deterministic Python logic. "
+                "`BusinessRubricJudge` is a class-based `weave.Scorer` that "
+                "calls W&B Serverless Inference. `weave.Evaluation` combines "
+                "the dataset and both scorer types, and `.evaluate.call()` "
+                "creates the inspectable evaluation run."
+            ),
+        ]
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(deterministic_scorers):
+    scorer_ids = list(deterministic_scorers.value)
+    return (scorer_ids,)
+
+
+@app.cell(hide_code=True)
+def _(connection_verified, dataset_receipt, freeze_evaluation, mo, scorer_ids):
+    evaluation_ready = bool(
+        connection_verified
+        and dataset_receipt
+        and freeze_evaluation.value
+        and scorer_ids
+    )
+    run_v1_evaluation_button = mo.ui.run_button(
+        label="Run the Version 1 evaluation",
+        disabled=not evaluation_ready,
+    )
+    run_v1_evaluation_button
+    return evaluation_ready, run_v1_evaluation_button
+
+
+@app.cell(hide_code=True)
+async def _(core, dataset_rows, run_v1_evaluation_button, scorer_ids):
+    v1_evaluation_error = ""
+    v1_evaluation = None
+    if run_v1_evaluation_button.value:
+        try:
+            v1_evaluation = await core.run_evaluation(
+                "v1", dataset_rows, scorer_ids=scorer_ids
+            )
+        except Exception as error:
+            v1_evaluation_error = core.safe_error_text(error)
+    return v1_evaluation, v1_evaluation_error
+
+
+@app.cell(hide_code=True)
+def _(html, mo, v1_evaluation, v1_evaluation_error):
+    if v1_evaluation:
+        _judges = {row["case_id"]: row for row in v1_evaluation["judge_results"]}
+        _lines = [
+            "| Dataset case | Deterministic gate | Live LLM judge |",
+            "|---|---:|---:|",
+        ]
+        for _row in v1_evaluation["deterministic_results"]:
+            _judge = _judges.get(_row["case_id"], {}).get("verdict", "missing")
+            _lines.append(
+                f"| {_row['title']} | **{_row['gate'].upper()}** | **{str(_judge).upper()}** |"
+            )
+        _url = html.escape(v1_evaluation["evaluation_url"], quote=True)
         _view = mo.vstack(
-            [_summary, mo.md("```json\n" + json.dumps(_case["evidence"], indent=2) + "\n```")]
+            [
+                mo.Html(
+                    f'<div class="loop-receipt"><b>Version 1 evaluation run complete.</b> Three Python scorers with deterministic logic plus {v1_evaluation["judge_calls"]} live judge calls. <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the evaluation run in Weave ↗</a></div>'
+                ),
+                mo.md("\n".join(_lines)),
+                mo.Html(
+                    '<div class="loop-panel rose"><b>Weave stop</b><br>Open the mixed-customer row. Follow the same case from input → Version 1 output → customer-isolation scorer → LLM-judge call. The deterministic failure is the reason Version 1 stays blocked for this case.</div>'
+                ),
+            ]
+        )
+    elif v1_evaluation_error:
+        _view = mo.Html(
+            f'<div class="loop-error"><b>The Version 1 evaluation run did not complete.</b> {html.escape(v1_evaluation_error)}</div>'
         )
     else:
-        _view = _summary
+        _view = mo.Html("")
     _view
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    clean_prediction = mo.ui.dropdown(
-        options={"Pass": "pass", "Review": "review", "Block": "block"},
-        value=None,
-        label="Routine close",
-    )
-    boundary_prediction = mo.ui.dropdown(
-        options={"Pass": "pass", "Review": "review", "Block": "block"},
-        value=None,
-        label="Cross-customer change",
-    )
-    retry_prediction = mo.ui.dropdown(
-        options={"Pass": "pass", "Review": "review", "Block": "block"},
-        value=None,
-        label="Duplicate retry event",
-    )
-    missing_prediction = mo.ui.dropdown(
-        options={"Pass": "pass", "Review": "review", "Block": "block"},
-        value=None,
-        label="Evidence missing",
-    )
-    mo.vstack(
-        [
-            mo.Html("<h3>Make your call before the judge</h3><p>Predict your assigned case. If you finish early, predict the other three.</p>"),
-            mo.hstack([clean_prediction, boundary_prediction], gap=2),
-            mo.hstack([retry_prediction, missing_prediction], gap=2),
-        ]
-    )
-    return boundary_prediction, clean_prediction, missing_prediction, retry_prediction
-
-
-@app.cell(hide_code=True)
-def _(boundary_prediction, clean_prediction, missing_prediction, retry_prediction):
-    participant_predictions = {
-        "clean_success": clean_prediction.value,
-        "cross_customer": boundary_prediction.value,
-        "duplicate_retry": retry_prediction.value,
-        "insufficient_evidence": missing_prediction.value,
-    }
-    return (participant_predictions,)
-
-
-@app.cell(hide_code=True)
-def _(mo):
     mo.Html(
         """
-        <section class="pp-page">
-          <div class="pp-kicker">How the evaluation works</div>
-          <h2>A scorer asks one repeatable question</h2>
-          <div class="pp-layer">
-            <div><b>Deterministic scorer</b><br>Uses fixed logic for facts such as test results, counts, formats, or policy flags.</div>
-            <div><b>LLM judge</b><br>Uses a model to interpret recorded evidence against a written rubric.</div>
-            <div><b>Human authority</b><br>Decides which signals matter and how much permission the system earns.</div>
-          </div>
-          <p>This exercise uses an LLM judge as a Weave scorer. A deterministic Python policy then converts criterion statuses into <b>pass</b>, <b>review</b>, or <b>block</b>.</p>
-          <div class="pp-guide"><span class="pp-checkpoint">Weave UI stop 2 · Inspect the evaluation</span><br>After the baseline run, open one Evaluation row and follow the chain: <b>dataset case → recorded agent output → scorer call → judge reasons → verdict</b>.</div>
-          <div class="pp-do"><b>Before the model runs</b>Apply the baseline rubric to your case yourself. Keep that prediction visible while the judge runs—a judge can apply an incomplete rubric consistently.</div>
+        <section class="loop-page">
+          <div class="loop-kicker">Chapter 4 · Improve</div>
+          <h2>Change the agent—not the test</h2>
+          <p>Version 1 and Version 2 are two development versions of the same PatchPilot application. Weave represents each version as a <code>weave.Model</code> so its configuration can be saved and compared. The only intended change is the customer boundary in the patch strategy.</p>
         </section>
         """
     )
@@ -599,114 +677,87 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    _code_walkthrough = "\n".join(
+    _markdown = "\n".join(
         [
-            "### The code that creates the Weave evaluation",
+            "### The prepared Version 1 → Version 2 change",
             "",
-            "The scorer is defined in Python. Passing it to `weave.Evaluation` is what makes its calls and results inspectable in Weave.",
+            "**Simplified patch logic—not a literal source-code diff.** The table below shows the exact `weave.Model` properties used by the runtime.",
             "",
-            "```python",
-            "class BusinessRubricJudge(weave.Scorer):",
-            "    model_id: str",
-            "    rubric: dict",
+            "```diff",
+            " # Version 1",
+            "-tickets = select(ticket_id in requested_ticket_ids)",
             "",
-            '    @weave.op(name="patchpilot_business_rubric_judge")',
-            "    async def score(self, output, case_id, scenario, evidence):",
-            "        response = await self._client.chat.completions.create(",
-            "            model=self.model_id,",
-            "            messages=build_judge_messages(",
-            "                rubric=self.rubric,",
-            "                output=output,",
-            "                scenario=scenario,",
-            "                evidence=evidence,",
-            "            ),",
-            "        )",
-            "        return normalize_judgment(response, self.rubric)",
-            "",
-            "judge = BusinessRubricJudge(",
-            "    model_id=PATCHPILOT_JUDGE_MODEL,",
-            "    rubric=baseline_rubric,",
-            ")",
-            "",
-            "evaluation = weave.Evaluation(",
-            "    dataset=cases,",
-            "    scorers=[judge],",
-            ")",
-            "await evaluation.evaluate(recorded_agent)",
+            " # Version 2",
+            "+tickets = select(",
+            "+    ticket_id in requested_ticket_ids",
+            "+    and customer_id == requesting_customer_id",
+            "+ )",
             "```",
             "",
-            "**What can change?** The model and scorer implementation can be changed in Python before a run. In this live workshop, the model stays fixed and you change the rubric text and its severity—enough to demonstrate how an LLM judge's instructions alter the evaluation without turning the session into a coding exercise.",
+            "| Property | Version 1 | Version 2 |",
+            "|---|---|---|",
+            "| `agent_version` | `v1` | `v2` |",
+            "| `patch_strategy` | `ticket_ids_only` | `tenant_scoped` |",
+            "| `customer_boundary` | `not_enforced` | `requesting_customer_only` |",
+            "",
+            "Held fixed: dataset fingerprint, three Python scorers, LLM-judge rubric, judge model, and human-in-the-loop policy.",
         ]
     )
-    mo.md(_code_walkthrough)
+    mo.md(_markdown)
     return
 
 
 @app.cell(hide_code=True)
-def _(config_status, mo):
-    baseline_button = mo.ui.run_button(
-        label="Run the baseline four-case evaluation",
-        disabled=not config_status["ready"],
+def _(evaluation_ready, mo, v1_evaluation):
+    run_v2_evaluation_button = mo.ui.run_button(
+        label="Run the Version 2 evaluation with the same setup",
+        disabled=not (evaluation_ready and v1_evaluation),
     )
-    baseline_button
-    return (baseline_button,)
+    run_v2_evaluation_button
+    return (run_v2_evaluation_button,)
 
 
 @app.cell(hide_code=True)
-async def _(baseline_button, core):
-    baseline_error = ""
-    baseline_result = None
-    if baseline_button.value:
+async def _(core, dataset_rows, run_v2_evaluation_button, scorer_ids):
+    v2_evaluation_error = ""
+    v2_evaluation = None
+    if run_v2_evaluation_button.value:
         try:
-            baseline_result = await core.run_evaluation(core.load_rubrics()["baseline"])
+            v2_evaluation = await core.run_evaluation(
+                "v2", dataset_rows, scorer_ids=scorer_ids
+            )
         except Exception as error:
-            baseline_error = core.safe_error_text(error)
-    return baseline_error, baseline_result
+            v2_evaluation_error = core.safe_error_text(error)
+    return v2_evaluation, v2_evaluation_error
 
 
 @app.cell(hide_code=True)
-def _(baseline_error, baseline_result, core, mo, participant_predictions):
-    import html as _html
-
-    def _md_cell(value):
-        return (
-            _html.escape(str(value), quote=False)
-            .replace("|", "\\|")
-            .replace("\n", " ")
-        )
-
-    if baseline_result:
-        _cases = {row["case_id"]: row for row in core.load_cases()}
+def _(core, html, mo, v1_evaluation, v2_evaluation, v2_evaluation_error):
+    if v1_evaluation and v2_evaluation:
+        _comparison = core.compare_evaluations(v1_evaluation, v2_evaluation)
         _lines = [
-            "| Case | Your call | Baseline judge | Human reference |",
-            "|---|---:|---:|---:|",
+            "| Dataset case | V1 gate | V2 gate | V1 judge | V2 judge |",
+            "|---|---:|---:|---:|---:|",
         ]
-        for _row in baseline_result["results"]:
-            _verdict = _row["verdict"].upper()
-            _prediction = (participant_predictions[_row["case_id"]] or "not chosen").upper()
-            _reference = _cases[_row["case_id"]]["expected_outcome"].upper()
+        for _row in _comparison:
             _lines.append(
-                f"| {_md_cell(_cases[_row['case_id']]['title'])} | {_md_cell(_prediction)} | **{_md_cell(_verdict)}** | {_md_cell(_reference)} |"
+                f"| {_row['case']} | **{_row['v1_gate'].upper()}** | **{_row['v2_gate'].upper()}** | {_row['v1_judge'].upper()} | {_row['v2_judge'].upper()} |"
             )
-        _judge_model = _html.escape(str(baseline_result["judge_model"]))
-        _evaluation_url = _html.escape(
-            str(baseline_result["evaluation_url"]), quote=True
-        )
+        _url = html.escape(v2_evaluation["evaluation_url"], quote=True)
         _view = mo.vstack(
             [
                 mo.Html(
-                    f"""<div class="pp-receipt"><b>Baseline evaluation saved.</b> Four judge calls used
-                    <code>{_judge_model}</code>. <a href="{_evaluation_url}" target="_blank" rel="noopener noreferrer">Open it in Weave ↗</a></div>"""
+                    f'<div class="loop-receipt"><b>Version 2 evaluation run complete.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open it and compare with the Version 1 baseline run in Weave ↗</a></div>'
                 ),
                 mo.md("\n".join(_lines)),
                 mo.Html(
-                    '<div class="pp-panel rose"><b>The green illusion:</b> a rubric can be applied consistently and still omit the business failure that matters. The human reference is a comparison point—not an answer the judge is forced to produce.</div>'
+                    '<div class="loop-panel mint"><b>What changed?</b><br>The mixed-customer case moves from BLOCK to PASS in the deterministic gate. The missing-evidence case remains in human review. A live LLM judge may vary; inspect its reasons instead of treating variation as a hidden failure.</div>'
                 ),
             ]
         )
-    elif baseline_error:
+    elif v2_evaluation_error:
         _view = mo.Html(
-            f'<div class="pp-error"><b>The baseline evaluation did not complete.</b> {_html.escape(baseline_error)}</div>'
+            f'<div class="loop-error"><b>The Version 2 evaluation run did not complete.</b> {html.escape(v2_evaluation_error)}</div>'
         )
     else:
         _view = mo.Html("")
@@ -715,435 +766,107 @@ def _(baseline_error, baseline_result, core, mo, participant_predictions):
 
 
 @app.cell(hide_code=True)
-def _(core, mo):
-    judge_case_choice = mo.ui.dropdown(
-        options={row["title"]: row["case_id"] for row in core.load_cases()},
-        value="Routine close stays inside the account",
-        label="Choose one evaluation row to inspect deeply",
-    )
-    judge_agreement = mo.ui.radio(
-        options={
-            "I agree with the judge's application of this rubric": "agree",
-            "I disagree with how the judge applied the rubric": "disagree",
-            "The evidence is not sufficient to decide": "insufficient",
-        },
-        value="The evidence is not sufficient to decide",
-        label="After inspecting the row, what is your assessment?",
-    )
-    disagreement_layer = mo.ui.dropdown(
-        options={
-            "The dataset or recorded evidence": "evidence",
-            "The rubric wording": "rubric",
-            "The LLM judge's interpretation": "judge",
-            "The pass/review/block policy": "policy",
-        },
-        value="The rubric wording",
-        label="If the outcome surprises you, which layer should the team inspect first?",
-    )
-    mo.vstack([judge_case_choice, judge_agreement, disagreement_layer])
-    return disagreement_layer, judge_agreement, judge_case_choice
-
-
-@app.cell(hide_code=True)
-def _(baseline_result, core, judge_case_choice, mo):
-    import html as _html
-
-    def _md_cell(value):
-        return (
-            _html.escape(str(value), quote=False)
-            .replace("|", "\\|")
-            .replace("\n", " ")
-        )
-
-    if baseline_result:
-        _cases = {row["case_id"]: row for row in core.load_cases()}
-        _judgments = {row["case_id"]: row for row in baseline_result["results"]}
-        _case = _cases[judge_case_choice.value]
-        _judgment = _judgments[judge_case_choice.value]
-        _criteria_lines = [
-            "| Criterion | Judge status | Judge reason |",
-            "|---|---:|---|",
-        ]
-        for _criterion in _judgment["criteria"]:
-            _criteria_lines.append(
-                f"| {_md_cell(_criterion['label'])} | **{_md_cell(_criterion['status'].upper())}** | {_md_cell(_criterion['reason'])} |"
-            )
-        _case_title = _html.escape(str(_case["title"]))
-        _reference = _html.escape(str(_case["expected_outcome"]).upper())
-        _reference_reason = _html.escape(str(_case["reference_reason"]))
-        _judge_verdict = _html.escape(str(_judgment["verdict"]).upper())
-        _judge_rationale = _html.escape(str(_judgment["rationale"]))
-        _view = mo.vstack(
-            [
-                mo.Html(
-                    f"""
-                    <section class="pp-page">
-                      <div class="pp-kicker">Inspect the judge—not just the label</div>
-                      <h2>{_case_title}</h2>
-                      <div class="pp-panel"><b>Business reference:</b> {_reference} — {_reference_reason}</div>
-                      <div class="pp-do"><b>Your turn · 4 minutes</b>Open this row in Weave. Compare the recorded evidence, each rubric criterion, the judge's reason, and the final verdict.</div>
-                    </section>
-                    """
-                ),
-                mo.md("\n".join(_criteria_lines)),
-                mo.Html(
-                    f'<div class="pp-receipt"><b>Judge verdict:</b> {_judge_verdict}<br><b>Judge rationale:</b> {_judge_rationale}</div>'
-                ),
-                mo.Html(
-                    '<div class="pp-guide"><b>Diagnose before changing anything.</b>If you disagree, identify the layer to inspect first: evidence, rubric, judge interpretation, or verdict policy.</div>'
-                ),
-            ]
-        )
-    else:
-        _view = mo.Html(
-            '<div class="pp-guide">Run the baseline evaluation before inspecting a judge result.</div>'
-        )
-    _view
-    return
-
-
-@app.cell(hide_code=True)
-def _(core, mo):
-    rule_focus = mo.ui.dropdown(
-        options=core.SUGGESTED_BUSINESS_RULES,
-        value="Customer isolation",
-        label="Choose a business boundary to start from",
-    )
-    rule_focus
-    return (rule_focus,)
-
-
-@app.cell(hide_code=True)
-def _(mo, rule_focus):
-    business_rule = mo.ui.text_area(
-        label="Write or revise one atomic business rule",
-        value=rule_focus.value,
-        rows=3,
-    )
-    rule_severity = mo.ui.radio(
-        options={
-            "Block release when the rule fails": "block",
-            "Route the result to human review": "review",
-        },
-        value="Block release when the rule fails",
-        label="Choose the severity of this rule",
-    )
-    return business_rule, rule_severity
-
-
-@app.cell(hide_code=True)
-def _(business_rule, mo, participant_role, rule_severity):
-    _rule_lens = {
-        "support": "Would support teams understand exactly when this rule was violated?",
-        "risk": "Does the rule name one unacceptable outcome without ambiguity?",
-        "product": "Does the rule protect the customer outcome without blocking unrelated value?",
-        "engineering": "Could the team later implement a protected deterministic check for this rule?",
-    }
-    mo.vstack(
-        [
-            mo.Html(
-                """
-                <section class="pp-page">
-                  <div class="pp-kicker">Chapter 3 · Define good</div>
-                  <h2>Change the judge by changing its instructions</h2>
-                  <p>The scorer code and model stay fixed for this run. You change the judge's rubric: the outcome it must protect, the boundary it must test, and the consequence of failure.</p>
-                  <div class="pp-guide"><span class="pp-checkpoint">Facilitator checkpoint</span><br>A strong rule names <b>one outcome</b>, the <b>boundary</b>, the evidence that could establish it, and what happens when it fails or remains unknown.</div>
-                  <div class="pp-do"><b>Your turn · 6 minutes</b>Choose one boundary, make the rule atomic, select review or block, and inspect the compiled rubric before rerunning the evaluation.</div>
-                </section>
-                """
-            ),
-            mo.Html(f'<div class="pp-panel"><b>Your role lens:</b> {_rule_lens[participant_role.value]}</div>'),
-            business_rule,
-            rule_severity,
-            mo.Html(
-                '<div class="pp-guide"><b>Rule self-check</b>Can a reader identify the protected outcome, prohibited behavior, evidence, and severity without asking what you meant?</div>'
-            ),
-        ]
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(business_rule, core, rule_severity):
-    revised_rubric_error = ""
-    revised_rubric = None
-    try:
-        revised_rubric = core.build_revised_rubric(business_rule.value)
-        if rule_severity.value == "review":
-            for _criterion in revised_rubric["criteria"]:
-                if _criterion["id"] == "business_boundary":
-                    _criterion["blocking"] = False
-    except Exception as error:
-        revised_rubric_error = str(error)
-    return revised_rubric, revised_rubric_error
-
-
-@app.cell(hide_code=True)
-def _(mo, revised_rubric, revised_rubric_error):
-    import html as _html
-    import json as _json
-
-    if revised_rubric:
-        _criteria = "".join(
-            "<li>"
-            f"<b>{'BLOCKING' if row['blocking'] else 'Supporting'}</b> — "
-            f"{_html.escape(str(row['label']))}"
-            "</li>"
-            for row in revised_rubric["criteria"]
-        )
-        _rubric_json = _json.dumps(revised_rubric, indent=2)
-        _view = mo.vstack(
-            [
-                mo.Html(
-                    '<div class="pp-guide"><b>What the scorer will receive</b>Your notebook control has been compiled into a structured rubric. This object becomes part of the LLM judge prompt and is saved with the scorer configuration in Weave.</div>'
-                ),
-                mo.Html(f"<ul>{_criteria}</ul>"),
-                mo.md(f"```json\n{_rubric_json}\n```"),
-            ]
-        )
-    else:
-        _view = mo.Html(
-            f'<div class="pp-error">{_html.escape(revised_rubric_error)}</div>'
-        )
-    _view
-    return
-
-
-@app.cell(hide_code=True)
-def _(config_status, mo, revised_rubric):
-    revised_button = mo.ui.run_button(
-        label="Run the revised evaluation",
-        disabled=(not config_status["ready"] or revised_rubric is None),
-    )
-    revised_button
-    return (revised_button,)
-
-
-@app.cell(hide_code=True)
-async def _(core, revised_button, revised_rubric):
-    revised_error = ""
-    revised_result = None
-    if revised_button.value and revised_rubric is not None:
-        try:
-            revised_result = await core.run_evaluation(revised_rubric)
-        except Exception as error:
-            revised_error = core.safe_error_text(error)
-    return revised_error, revised_result
-
-
-@app.cell(hide_code=True)
-def _(baseline_result, core, mo, participant_predictions, revised_error, revised_result):
-    import html as _html
-
-    def _md_cell(value):
-        return (
-            _html.escape(str(value), quote=False)
-            .replace("|", "\\|")
-            .replace("\n", " ")
-        )
-
-    if baseline_result and revised_result:
-        _rows = core.compare_evaluations(baseline_result, revised_result)
-        _cases = {row["case_id"]: row for row in core.load_cases()}
-        _lines = [
-            "| Case | Your call | Baseline | Revised | Reference | Changed? |",
-            "|---|---:|---:|---:|---:|:---:|",
-        ]
-        for _row in _rows:
-            _prediction = (participant_predictions[_row["case_id"]] or "not chosen").upper()
-            _reference = _cases[_row["case_id"]]["expected_outcome"].upper()
-            _lines.append(
-                f"| {_md_cell(_row['case'])} | {_md_cell(_prediction)} | **{_md_cell(_row['baseline'].upper())}** | **{_md_cell(_row['revised'].upper())}** | {_md_cell(_reference)} | {_md_cell(_row['changed'])} |"
-            )
-        _evaluation_url = _html.escape(
-            str(revised_result["evaluation_url"]), quote=True
-        )
-        _view = mo.vstack(
-            [
-                mo.Html(
-                    f"""<div class="pp-receipt"><b>Revised evaluation saved.</b> The same four agent outputs were judged again.
-                    <a href="{_evaluation_url}" target="_blank" rel="noopener noreferrer">Open it in Weave ↗</a></div>"""
-                ),
-                mo.Html(
-                    '<div class="pp-guide"><span class="pp-checkpoint">Weave UI stop 3 · Compare and diagnose</span><br>Keep the dataset and agent output fixed. Compare baseline with revised, then decide whether an unexpected result belongs to the <b>evidence</b>, <b>rubric</b>, <b>judge interpretation</b>, or <b>verdict policy</b>.</div>'
-                ),
-                mo.md("\n".join(_lines)),
-                mo.Html(
-                    '<div class="pp-panel mint"><b>The agent did not change.</b> The organization changed what it was willing to accept.</div>'
-                ),
-                mo.Html(
-                    '<div class="pp-do"><b>Your turn · 3 minutes</b>Find one intended change and one result that surprised you or stayed unchanged. If a verdict differs from the human reference, inspect the scorer call before changing the answer.</div>'
-                ),
-            ]
-        )
-    elif revised_error:
-        _view = mo.Html(
-            f'<div class="pp-error"><b>The revised evaluation did not complete.</b> {_html.escape(revised_error)}</div>'
-        )
-    elif revised_result:
-        _view = mo.Html(
-            '<div class="pp-panel amber">The revised evaluation is ready. Run the baseline evaluation to see the comparison.</div>'
-        )
-    else:
-        _view = mo.Html("")
-    _view
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    _policy_source = "\n".join(
-        [
-            'if any(row["blocking"] and row["status"] == "fail" for row in criteria):',
-            '    verdict = "block"',
-            'elif any(row["status"] in {"fail", "unknown"} for row in criteria):',
-            '    verdict = "review"',
-            "else:",
-            '    verdict = "pass"',
-        ]
-    )
-    mo.vstack(
-        [
-            mo.Html(
-                '<div class="pp-guide"><b>Code walkthrough · deterministic policy</b>The LLM returns criterion statuses and reasons. This fixed Python reducer—not the model—turns those statuses into the final pass, review, or block verdict.</div>'
-            ),
-            mo.md(f"```python\n{_policy_source}\n```"),
-        ]
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
+def _(mo, v2_evaluation):
     final_decision = mo.ui.radio(
         options={
-            "Allow automatic operation inside a narrow scope": "automatic",
+            "Allow automatic operation for bounded low-risk cases": "automatic",
             "Require human review": "review",
             "Keep the agent blocked": "block",
         },
         value="Require human review",
-        label="After the evidence, what authority has PatchPilot earned?",
+        label="After comparing both versions, what should happen?",
     )
-    permitted_scope = mo.ui.text_area(
-        label="Permitted scope",
-        placeholder="For example: draft changes only; no deployment authority…",
-        rows=2,
+    confidence = mo.ui.radio(
+        options={"High": "high", "Medium": "medium", "Low": "low"},
+        value="Medium",
+        label="Confidence",
     )
-    missing_evidence = mo.ui.text_area(
-        label="Evidence still missing",
-        placeholder="For example: protected regression tests and production review outcomes…",
-        rows=2,
+    permitted_scope = mo.ui.radio(
+        options={
+            "Low-risk, single-customer cases": "bounded_cases",
+            "This patch only": "this_patch",
+            "No automatic operation": "no_automation",
+        },
+        value="No automatic operation",
+        label="Approved scope",
     )
-    human_checkpoint = mo.ui.text_area(
-        label="Where is human approval required?",
-        placeholder="For example: a support engineer approves every proposed patch",
-        rows=2,
+    reviewer = mo.ui.text(value="Workshop participant", label="Reviewer")
+    save_decision_button = mo.ui.run_button(
+        label="Save the human-in-the-loop decision",
+        disabled=v2_evaluation is None,
     )
-    stop_condition = mo.ui.text_area(
-        label="What measurable event stops the system?",
-        placeholder="For example: any cross-customer write or duplicate audit event",
-        rows=2,
-    )
-    stop_owner = mo.ui.text(
-        label="Who can stop the system?",
-        placeholder="Named role or team",
-    )
-    return final_decision, human_checkpoint, missing_evidence, permitted_scope, stop_condition, stop_owner
-
-
-@app.cell(hide_code=True)
-def _(
-    final_decision,
-    human_checkpoint,
-    missing_evidence,
-    mo,
-    participant_role,
-    permitted_scope,
-    stop_condition,
-    stop_owner,
-):
-    _authority_lens = {
-        "support": "Can the support organization operate this boundary during a high-volume event?",
-        "risk": "Are the stop condition and accountable owner explicit?",
-        "product": "Is the permitted scope narrow enough to earn trust while delivering value?",
-        "engineering": "Can the human checkpoint and stop condition be implemented and monitored?",
-    }
     mo.vstack(
         [
             mo.Html(
-                """
-                <section class="pp-page">
-                  <div class="pp-kicker">Chapter 4 · Bound the authority</div>
-                  <h2>Make the decision the evidence can support</h2>
-                  <p>Use this sentence to prepare your decision: <b>“The evidence supports ___, but it does not yet prove ___.”</b></p>
-                  <div class="pp-guide"><span class="pp-checkpoint">Facilitator checkpoint</span><br>The evaluation informs the decision. It does not grant authority. A person still sets scope, review, stop conditions, and ownership.</div>
-                  <div class="pp-do"><b>Your turn · 5 minutes</b>Choose the smallest defensible authority and complete the operating boundary below.</div>
-                </section>
-                """
+                '<section class="loop-page"><div class="loop-kicker">Chapter 5 · Decide</div><h2>Use evidence to set the human-in-the-loop boundary</h2><div class="loop-do"><b>Your turn · 2 minutes</b><br>Record the decision, confidence, and operating scope. These annotations persist in Weave.</div></section>'
             ),
-            mo.Html(f'<div class="pp-panel"><b>Your role lens:</b> {_authority_lens[participant_role.value]}</div>'),
             final_decision,
+            confidence,
             permitted_scope,
-            missing_evidence,
-            human_checkpoint,
-            stop_condition,
-            stop_owner,
+            reviewer,
+            save_decision_button,
         ]
     )
-    return
+    return confidence, final_decision, permitted_scope, reviewer, save_decision_button
 
 
 @app.cell(hide_code=True)
-def _(
+async def _(
+    confidence,
+    core,
+    dataset_receipt,
     final_decision,
-    human_checkpoint,
     initial_decision,
-    missing_evidence,
-    mo,
-    opening_evidence,
+    participant_role,
     permitted_scope,
-    stop_condition,
-    stop_owner,
+    reviewer,
+    rubric,
+    save_decision_button,
+    scorer_ids,
+    trace_receipt,
 ):
-    import html as _html
+    decision_error = ""
+    decision_receipt = None
+    if save_decision_button.value and trace_receipt and dataset_receipt:
+        try:
+            decision_receipt = await core.record_human_review(
+                {
+                    "initial_decision": initial_decision.value,
+                    "final_decision": final_decision.value,
+                    "participant_role": participant_role,
+                    "dataset_uri": dataset_receipt["uri"],
+                    "scorer_ids": scorer_ids,
+                    "rubric_id": rubric["rubric_id"],
+                    "reviewed_versions": ["v1", "v2"],
+                    "permitted_scope": permitted_scope.value,
+                    "reviewer": reviewer.value,
+                    "confidence": confidence.value,
+                    "trace_call_id": trace_receipt["call_id"],
+                }
+            )
+        except Exception as error:
+            decision_error = core.safe_error_text(error)
+    return decision_error, decision_receipt
 
-    _complete = bool(
-        permitted_scope.value.strip()
-        and missing_evidence.value.strip()
-        and human_checkpoint.value.strip()
-        and stop_condition.value.strip()
-        and stop_owner.value.strip()
-    )
-    if _complete:
-        _initial = _html.escape(str(initial_decision.value).upper())
-        _final = _html.escape(str(final_decision.value).upper())
-        _scope = _html.escape(permitted_scope.value)
-        _opening = _html.escape(opening_evidence.value or "Not recorded")
-        _missing = _html.escape(missing_evidence.value)
-        _checkpoint = _html.escape(human_checkpoint.value)
-        _stop = _html.escape(stop_condition.value)
-        _owner = _html.escape(stop_owner.value)
+
+@app.cell(hide_code=True)
+def _(decision_error, decision_receipt, html, mo):
+    if decision_receipt:
+        _record_url = html.escape(decision_receipt["record_url"], quote=True)
+        _annotation_note = (
+            f'<br><span class="loop-small">Annotation warning: {html.escape(decision_receipt["annotation_error"])}</span>'
+            if decision_receipt["annotation_error"]
+            else ""
+        )
         _view = mo.Html(
-            f"""
-            <section class="pp-page">
-              <div class="pp-kicker">Your decision receipt</div>
-              <h2>{_initial} → {_final}</h2>
-              <div class="pp-panel mint">
-                <b>Permitted scope:</b> {_scope}<br><br>
-                <b>Evidence that could change my mind:</b> {_opening}<br><br>
-                <b>Still missing:</b> {_missing}<br><br>
-                <b>Human checkpoint:</b> {_checkpoint}<br><br>
-                <b>Stop condition:</b> {_stop}<br><br>
-                <b>Stop authority:</b> {_owner}
-              </div>
-              <div class="pp-guide"><b>Defend the boundary</b>Use this receipt if you are invited to explain your decision: “The evidence supports ___, but it does not yet prove ___. Therefore, PatchPilot may ___, with human review at ___, and it stops when ___.”</div>
-            </section>
-            """
+            f'<div class="loop-receipt"><b>Human-in-the-loop record saved.</b> <a href="{_record_url}" target="_blank" rel="noopener noreferrer">Open the review record in Weave ↗</a>{_annotation_note}</div>'
+        )
+    elif decision_error:
+        _view = mo.Html(
+            f'<div class="loop-error"><b>The decision was not saved.</b> {html.escape(decision_error)}</div>'
         )
     else:
-        _view = mo.Html(
-            '<div class="pp-panel amber">Complete the five operating-boundary fields to create your decision receipt.</div>'
-        )
+        _view = mo.Html("")
     _view
     return
 
@@ -1152,15 +875,13 @@ def _(
 def _(mo):
     mo.Html(
         """
-        <section class="pp-page">
-          <div class="pp-kicker">What you can now ask your team</div>
-          <h2>Evidence before authority</h2>
-          <p><b>1.</b> Show me what the agent did.</p>
-          <p><b>2.</b> Show me the cases used to test it.</p>
-          <p><b>3.</b> Show me how “good” is defined.</p>
-          <p><b>4.</b> Show me who can limit or stop it.</p>
-          <p><b>5.</b> Show me what change makes us test it again.</p>
-          <div class="pp-rail">TRACE THE RUN &nbsp;→&nbsp; TEST THE SYSTEM &nbsp;→&nbsp; DEFINE GOOD &nbsp;→&nbsp; BOUND THE AUTHORITY</div>
+        <section class="loop-page">
+          <div class="loop-kicker">The Agent Loop</div>
+          <h2>Every change creates a new evidence question</h2>
+          <div class="loop-rail">TRACE → DATASET → SCORERS → EVALUATION → CHANGE → COMPARE → HUMAN-IN-THE-LOOP DECISION</div>
+          <p><b>A trace</b> tells us what happened. <b>A dataset</b> makes the concern repeatable. <b>Scorers</b> turn expectations into measurements. <b>Evaluation runs</b> show whether a change helped. <b>Human review</b> determines how much responsibility the system is ready to receive.</p>
+          <div class="loop-panel amber"><b>Where AI was used today</b><br>The LLM judge used W&amp;B Serverless Inference. PatchPilot V1 and V2, the three Python scorers, dataset assembly, and annotation policy were fixed so the central comparison remained reliable.</div>
+          <p class="loop-small">Optional follow-up: change the judge rubric, add dataset cases, or replace the prepared PatchPilot versions with a live autonomous coding agent.</p>
         </section>
         """
     )

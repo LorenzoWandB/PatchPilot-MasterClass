@@ -1,7 +1,7 @@
 [project]
-name = "patchpilot-executive-masterclass"
-version = "1.0.0"
-description = "A business-first Marimo workshop for evaluating AI-agent evidence with W&B Weave."
+name = "agent-loop-workshop"
+version = "2.0.0"
+description = "A guided workshop for tracing, evaluating, and improving an AI agent with W&B Weave."
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
@@ -11,3 +11,7 @@ dependencies = [
   "python-dotenv>=1.0,<2",
   "weave>=0.52,<0.54",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
