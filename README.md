@@ -88,27 +88,43 @@ No participant edits Python during the main path. Technical attendees can read
 the code examples while everyone else uses labeled controls and follows the
 facilitator.
 
-## Prerequisites
+## Prepare before the workshop
 
-- A W&B account and API key.
-- Access to W&B Serverless Inference and available credits.
-- [`uv`](https://docs.astral.sh/uv/).
-- Network access to W&B and Weave.
-- A browser session signed into `wandb.ai` with access to the selected project.
+### 1. Create a W&B account and API key
 
-The API key authenticates the notebook. It does not sign the browser into
-`wandb.ai`, so both checks are required.
+1. [Create or sign in to a W&B account](https://wandb.ai/site).
+2. Open **Profile → User Settings → API Keys**.
+3. Select **Create new API key**.
+4. Copy the complete key immediately and store it securely. W&B displays the
+   full key only once. See the
+   [current W&B API-key instructions](https://docs.wandb.ai/models/quickstart).
 
-The notebook uses three explicit readiness states:
+Keep the key ready, but do not send it through email, chat, or Zoom.
 
-- **Setup incomplete:** a required local value is missing or invalid.
-- **Local setup found—connection not tested:** the local values exist, but no
-  service has been contacted yet.
-- **Notebook connection verified:** W&B authentication, the Weave project, and
-  the Serverless Inference judge all responded successfully.
+### 2. Open a terminal
 
-After verification, use **Open the project in Weave** to confirm that the
-browser is also signed in. Browser access cannot be proven by the API preflight.
+- **macOS:** press `Command + Space`, type `Terminal`, and press Enter.
+- **Windows:** open the Start menu, search for `PowerShell`, and open it.
+
+### 3. Install `uv`
+
+On macOS or Linux:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+On Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Close and reopen the terminal after installation. These commands come from the
+[official `uv` installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+
+You also need access to W&B Serverless Inference and available credits, network
+access to W&B and Weave, and a browser signed into `wandb.ai`.
 
 ## Start the main guided workshop
 
@@ -119,6 +135,10 @@ git clone https://github.com/LorenzoWandB/PatchPilot-MasterClass.git
 cd PatchPilot-MasterClass
 uv run --locked python start_workshop.py
 ```
+
+If `git` is unavailable, open this repository in GitHub, select **Code →
+Download ZIP**, unzip it, and open a terminal in the extracted
+`PatchPilot-MasterClass` folder. Then run only the final command above.
 
 On the first run, the launcher privately asks for:
 
@@ -132,6 +152,18 @@ permissions where supported. `.env` is ignored by Git. Later runs reuse the
 local settings. The notebook server listens only on `127.0.0.1` and uses a
 random Marimo session token; the one-command launcher opens the authenticated
 local URL automatically.
+
+The API key authenticates the notebook but does not sign the browser into
+`wandb.ai`. The notebook therefore shows three readiness states:
+
+- **Setup incomplete:** a required local value is missing or invalid.
+- **Local setup found—connection not tested:** the local values exist, but no
+  service has been contacted yet.
+- **Notebook connection verified:** W&B authentication, the Weave project, and
+  the Serverless Inference judge all responded successfully.
+
+After verification, use **Open the project in Weave** to confirm that the
+browser is also signed in. Browser access cannot be proven by the API preflight.
 
 To replace the local configuration:
 
