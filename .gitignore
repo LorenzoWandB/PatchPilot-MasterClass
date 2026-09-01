@@ -1,4 +1,12 @@
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
 .marimo/
 __marimo__/
 .pytest_cache/
@@ -13,6 +21,7 @@ __pycache__/
 .idea/
 .vscode/
 *.log
+wandb/
 dist/
 htmlcov/
 slides/

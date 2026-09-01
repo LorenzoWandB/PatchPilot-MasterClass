@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator, Mapping
+from typing import Any, Callable, Iterator, Mapping
 from urllib.parse import quote, urlparse
 
 import weave
@@ -333,6 +333,16 @@ def safe_error_text(error: Exception) -> str:
     api_key = os.environ.get("WANDB_API_KEY", "").strip()
     if api_key:
         message = message.replace(api_key, "[redacted]")
+    message = re.sub(
+        r"(?i)(authorization[\"']?\s*[:=]\s*[\"']?(?:bearer|basic)\s+)[^\s,;\"']+",
+        r"\1[redacted]",
+        message,
+    )
+    message = re.sub(
+        r"(?i)((?:wandb[_-]?api[_-]?key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\s,;\"']+",
+        r"\1[redacted]",
+        message,
+    )
     return " ".join(message.split())[:1000]
 
 
@@ -411,7 +421,77 @@ def connection_error_guidance(error: Exception) -> str:
         return "Confirm PATCHPILOT_JUDGE_MODEL is available to this W&B account."
     if "timed out" in message or "connection" in message:
         return "Check network access to W&B and try the preflight once more."
+    if "rlock" in message or "pickle" in message or "unhashable type" in message:
+        return "Restart the workshop from a fresh terminal, then retry this step once."
     return "Check the .env values and network access, then restart the notebook."
+
+
+def _wandb_project_url(config: Mapping[str, str]) -> str:
+    return f"https://wandb.ai/{quote(config['entity'])}/{quote(config['project'])}"
+
+
+def _call_started_at(call: Any) -> str:
+    started_at = getattr(call, "started_at", "")
+    if isinstance(started_at, datetime):
+        return started_at.isoformat()
+    return str(started_at or "")
+
+
+def _weave_call_url(
+    config: Mapping[str, str],
+    call: Any,
+    *,
+    surface: str = "traces",
+    hide_trace_tree: bool = False,
+) -> str:
+    """Open a Call in the current Weave detail panel instead of the list view."""
+
+    if surface not in {"traces", "evaluations"}:
+        raise ValueError("Choose the traces or evaluations Weave surface")
+    call_path = f"/{config['entity']}/{config['project']}/calls/{call.id}"
+    query = []
+    if hide_trace_tree:
+        query.append("hideTraceTree=1")
+    started_at = _call_started_at(call)
+    if started_at:
+        query.append(f"traceRootStartedAt={started_at}")
+    if query:
+        call_path = f"{call_path}?{'&'.join(query)}"
+    return (
+        f"{_wandb_project_url(config)}/weave/{surface}"
+        f"?view={surface}_default&peekPath={quote(call_path, safe='')}"
+    )
+
+
+def _weave_object_version_url(
+    config: Mapping[str, str], *, name: str, digest: str
+) -> str:
+    object_path = (
+        f"/{config['entity']}/{config['project']}/objects/{name}/versions/{digest}?&"
+    )
+    return (
+        f"{_weave_objects_url(config, name)}"
+        f"?peekPath={quote(object_path, safe='')}"
+    )
+
+
+def evaluation_comparison_url(
+    version_one: Mapping[str, Any],
+    version_two: Mapping[str, Any],
+    config: Mapping[str, str] | None = None,
+) -> str:
+    """Open two completed evaluation runs with Version 1 first as the baseline."""
+
+    current = require_configuration(config)
+    call_ids = [
+        str(version_one["evaluation_call_id"]),
+        str(version_two["evaluation_call_id"]),
+    ]
+    encoded_ids = quote(json.dumps(call_ids, separators=(",", ":")), safe="")
+    return (
+        f"{_wandb_project_url(current)}/weave/compare-evaluations"
+        f"?evaluationCallIds={encoded_ids}"
+    )
 
 
 async def run_saved_episode(
@@ -487,7 +567,11 @@ async def run_saved_episode(
 
         result, call = await run_episode.call()
 
-    return {"result": result, "call_id": str(call.id), "trace_url": str(call.ui_url)}
+    return {
+        "result": result,
+        "call_id": str(call.id),
+        "trace_url": _weave_call_url(current, call),
+    }
 
 
 def _weave_objects_url(config: Mapping[str, str], object_name: str = "") -> str:
@@ -519,7 +603,11 @@ def publish_workshop_dataset(
         "uri": str(ref.uri()),
         "fingerprint": fingerprint,
         "row_count": len(safe_rows),
-        "dataset_url": _weave_objects_url(current, name),
+        "dataset_url": _weave_object_version_url(
+            current,
+            name=name,
+            digest=str(ref.digest),
+        ),
     }
 
 
@@ -529,10 +617,22 @@ def simulate_prepared_agent_output(
     case_id: str,
     request: Mapping[str, Any],
 ) -> dict[str, Any]:
-    config = deepcopy(dict(application_config))
-    agent_version = str(config.get("agent_version", "custom"))
-    patch_strategy = str(config.get("patch_strategy", ""))
-    evidence_strategy = str(config.get("evidence_strategy", "as_observed"))
+    # Weave may attach runtime bookkeeping to a model instance while an
+    # evaluation is running. Read only the declared, serializable application
+    # properties instead of deep-copying any runtime state.
+    agent_version = str(application_config.get("agent_version", "custom"))
+    patch_strategy = str(application_config.get("patch_strategy", ""))
+    evidence_strategy = str(
+        application_config.get("evidence_strategy", "as_observed")
+    )
+    config = {
+        "agent_version": agent_version,
+        "patch_strategy": patch_strategy,
+        "customer_boundary": str(
+            application_config.get("customer_boundary", "not_enforced")
+        ),
+        "change_summary": str(application_config.get("change_summary", "")),
+    }
     requesting_customer = str(request["requesting_customer_id"])
     tickets = list(request.get("tickets") or [])
     if patch_strategy == "ticket_ids_only":
@@ -868,28 +968,43 @@ def _normalize_judgment(
     }
 
 
+def _open_judge_client(project_path: str) -> AsyncOpenAI:
+    """Create a short-lived client without storing credentials on the scorer."""
+
+    api_key = os.environ.get("WANDB_API_KEY", "").strip()
+    if not api_key:
+        raise ValueError("WANDB_API_KEY is required for the live LLM judge")
+    return AsyncOpenAI(
+        base_url=INFERENCE_BASE_URL,
+        api_key=api_key,
+        project=project_path,
+        max_retries=2,
+        timeout=90,
+    )
+
+
 class BusinessRubricJudge(weave.Scorer):
     """Live LLM-as-a-judge scorer served by W&B Serverless Inference."""
 
     rubric_id: str
     rubric: dict[str, Any]
     model_id: str
-    _client: Any = PrivateAttr()
+    project_path: str
     _results: dict[str, dict[str, Any]] = PrivateAttr(default_factory=dict)
 
     def __init__(
         self,
         *,
-        client: AsyncOpenAI,
         rubric: Mapping[str, Any],
         model_id: str,
+        project_path: str,
     ) -> None:
         super().__init__(
             rubric_id=str(rubric["rubric_id"]),
             rubric=deepcopy(dict(rubric)),
             model_id=model_id,
+            project_path=project_path,
         )
-        self._client = client
 
     @property
     def results(self) -> list[dict[str, Any]]:
@@ -904,60 +1019,64 @@ class BusinessRubricJudge(weave.Scorer):
         request: dict[str, Any],
     ) -> dict[str, Any]:
         criterion_count = len(self.rubric["criteria"])
-        response = await self._client.chat.completions.create(
-            model=self.model_id,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Apply the supplied business rubric to recorded evidence.",
-                },
-                {
-                    "role": "user",
-                    "content": _judge_prompt(
-                        rubric=self.rubric,
-                        case_id=case_id,
-                        scenario=scenario,
-                        request=request,
-                        output=output,
-                    ),
-                },
-            ],
-            reasoning_effort="low",
-            max_completion_tokens=800,
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "patchpilot_agent_quality_judgment",
-                    "strict": True,
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "criteria": {
-                                "type": "array",
-                                "minItems": criterion_count,
-                                "maxItems": criterion_count,
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {"type": "string"},
-                                        "status": {
-                                            "type": "string",
-                                            "enum": ["pass", "fail", "unknown"],
+        client = _open_judge_client(self.project_path)
+        try:
+            response = await client.chat.completions.create(
+                model=self.model_id,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Apply the supplied business rubric to recorded evidence.",
+                    },
+                    {
+                        "role": "user",
+                        "content": _judge_prompt(
+                            rubric=self.rubric,
+                            case_id=case_id,
+                            scenario=scenario,
+                            request=request,
+                            output=output,
+                        ),
+                    },
+                ],
+                reasoning_effort="low",
+                max_completion_tokens=800,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "patchpilot_agent_quality_judgment",
+                        "strict": True,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "criteria": {
+                                    "type": "array",
+                                    "minItems": criterion_count,
+                                    "maxItems": criterion_count,
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {"type": "string"},
+                                            "status": {
+                                                "type": "string",
+                                                "enum": ["pass", "fail", "unknown"],
+                                            },
+                                            "reason": {"type": "string"},
                                         },
-                                        "reason": {"type": "string"},
+                                        "required": ["id", "status", "reason"],
+                                        "additionalProperties": False,
                                     },
-                                    "required": ["id", "status", "reason"],
-                                    "additionalProperties": False,
                                 },
+                                "rationale": {"type": "string"},
                             },
-                            "rationale": {"type": "string"},
+                            "required": ["criteria", "rationale"],
+                            "additionalProperties": False,
                         },
-                        "required": ["criteria", "rationale"],
-                        "additionalProperties": False,
                     },
                 },
-            },
-        )
+            )
+        finally:
+            await client.close()
         content = response.choices[0].message.content or ""
         try:
             judgment = _normalize_judgment(_json_object(content), self.rubric)
@@ -1076,6 +1195,10 @@ async def run_application_evaluation(
     changed_dimension: str = "agent_version",
     contract_id: str = "guided-agent-loop-v1",
     attribute_namespace: str = "agent_loop",
+    result_compiler: Callable[
+        [list[Mapping[str, Any]], Any, list[str]], list[dict[str, Any]]
+    ]
+    | None = None,
 ) -> dict[str, Any]:
     """Evaluate any prepared PatchPilot model with an explicit experiment contract."""
 
@@ -1103,17 +1226,10 @@ async def run_application_evaluation(
         changed_dimension=changed_dimension,
         contract_id=contract_id,
     )
-    client = AsyncOpenAI(
-        base_url=INFERENCE_BASE_URL,
-        api_key=current["api_key"],
-        project=f"{current['entity']}/{current['project']}",
-        max_retries=2,
-        timeout=90,
-    )
     judge = BusinessRubricJudge(
-        client=client,
         rubric=active_rubric,
         model_id=current["judge_model"],
+        project_path=f"{current['entity']}/{current['project']}",
     )
     dataset = weave.Dataset(
         name=dataset_name,
@@ -1132,30 +1248,40 @@ async def run_application_evaluation(
             f"evaluation run · {timestamp}"
         ),
     )
-    try:
-        with _participant_key(current["api_key"]):
-            weave.init(f"{current['entity']}/{current['project']}")
-            with weave.attributes(
-                {f"{attribute_namespace}.{key}": value for key, value in properties.items()}
-            ):
-                summary, call = await evaluation.evaluate.call(
-                    evaluation,
-                    application,
-                )
-    finally:
-        await client.close()
+    with _participant_key(current["api_key"]):
+        weave.init(f"{current['entity']}/{current['project']}")
+        with weave.attributes(
+            {f"{attribute_namespace}.{key}": value for key, value in properties.items()}
+        ):
+            summary, call = await evaluation.evaluate.call(
+                evaluation,
+                application,
+            )
+    compiled_scorer_ids = [*active_ids, *extra_ids]
+    deterministic_results = (
+        result_compiler(safe_rows, application, compiled_scorer_ids)
+        if result_compiler is not None
+        else deterministic_case_results_for_application(
+            safe_rows,
+            application,
+            active_ids,
+        )
+    )
     return {
         "agent_version": application.agent_version,
-        "evaluation_url": str(call.ui_url),
+        "evaluation_url": _weave_call_url(
+            current,
+            call,
+            surface="evaluations",
+            hide_trace_tree=True,
+        ),
         "evaluation_call_id": str(call.id),
         "judge_model": current["judge_model"],
         "judge_calls": len(safe_rows),
         "case_ids": [str(row["case_id"]) for row in safe_rows],
-        "scorer_ids": [*active_ids, *extra_ids],
+        "scorer_ids": compiled_scorer_ids,
         "comparison_properties": properties,
-        "deterministic_results": deterministic_case_results(
-            safe_rows, application, active_ids
-        ),
+        "deterministic_results": deterministic_results,
         "judge_results": judge.results,
         "summary": summary,
     }
@@ -1332,10 +1458,19 @@ async def record_human_review(
                 )
         except Exception as error:
             annotation_error = safe_error_text(error)
+        try:
+            client.flush()
+        except Exception as error:
+            flush_error = safe_error_text(error)
+            annotation_error = (
+                f"{annotation_error}; {flush_error}"
+                if annotation_error
+                else flush_error
+            )
     return {
         "record": saved,
         "call_id": str(call.id),
-        "record_url": str(call.ui_url),
+        "record_url": _weave_call_url(current, call),
         "annotation_receipts": receipts,
         "annotation_error": annotation_error,
     }

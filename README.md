@@ -129,7 +129,9 @@ On the first run, the launcher privately asks for:
 
 The launcher saves these values in a local `.env` file with owner-only
 permissions where supported. `.env` is ignored by Git. Later runs reuse the
-local settings.
+local settings. The notebook server listens only on `127.0.0.1` and uses a
+random Marimo session token; the one-command launcher opens the authenticated
+local URL automatically.
 
 To replace the local configuration:
 
@@ -139,26 +141,44 @@ uv run --locked python start_workshop.py --reset
 
 Manual setup is also available by copying `.env.example` to `.env`.
 
-## Optional technical lab
+## Standalone technical workshop
 
-The guided workshop remains the default. Technical attendees can later open an
-editable 45–60 minute follow-up with one command:
+The repository also contains one consolidated, interactive 90-minute workshop for
+Python developers. It stands on its own; participants do not need to complete
+the guided workshop first. Open it with:
 
 ```bash
 uv run --locked python start_workshop.py --technical
 ```
 
-The technical lab uses the same BeeVerse scenario and W&B project, but distinct
-dataset and evaluation names. Participants edit a real `@weave.op` application,
-add a fifth dataset row and deterministic scorer, create PatchPilot V3, and
-compare V2 with V3 under a fixed evaluation contract. An optional final exercise
-changes the judge rubric and correctly reruns both application versions under a
-separately named contract.
+The technical workshop teaches two connected loops. In the inner loop, a live
+model selects from an allowlist of in-memory Python tools and Weave records the
+model call, validated tool execution, and output as a nested trace. In the outer
+loop, participants turn a trace-derived failure into a dataset case and scorer,
+add two safety-evidence tools to PatchPilot V3, evaluate V2 and V3 under one
+fixed contract, compare the actual tool behavior, and save a human release
+decision in Weave.
 
-The lab opens with `marimo edit`, while the main workshop continues to open as a
-read-only `marimo run` application. In the editor, click **Run all** in the
-bottom-right once to initialize the lab. Each five-row evaluation makes five
-live judge calls; the optional revised-rubric pair makes ten additional calls.
+The notebook opens as a rendered workshop app—there is no **Run all** step and no
+wall of notebook implementation cells. Four focused in-app Python editors ask
+participants to complete a dataset case, bounded tool dispatcher, two traced
+safety tools, and a deterministic scorer. Visible fixtures gate hosted calls,
+and the participant-authored dispatcher, tools, and scorer are used by the live
+V2/V3 comparison. There is no separate technical or solution notebook.
+
+The core path makes 21 hosted model calls per participant:
+
+- One live V2 baseline agent call.
+- Five live agent calls and five live judge calls for the V2 evaluation.
+- Five live agent calls and five live judge calls for the V3 evaluation.
+
+If the live V3 agent skips both optional safety tools, the notebook offers one
+clearly labeled retry. Choosing it adds one agent call, for a maximum of 22 calls
+on the core path.
+
+The W&B and Weave preflight does not make a model call. A take-home full rerun
+with a revised rubric adds 20 calls and must use a separately named evaluation
+contract.
 
 ## Workshop control contract
 
@@ -189,6 +209,32 @@ model response is malformed, that row is preserved as **needs human review**
 instead of failing the evaluation. Participants inspect its rubric, evidence,
 criteria, and reasons in Weave.
 
+## Security and data handling
+
+- The repository contains fictional BeeVerse cases only. Running the notebooks
+  sends the selected synthetic case inputs, application outputs, traces,
+  annotations, evaluation results, and model prompts/responses to the W&B
+  project configured by the participant. Do not replace workshop fixtures with
+  customer data, credentials, or other sensitive information.
+- The API key remains in the local `.env` file. It is not displayed, included
+  in operation inputs, stored in dataset rows, or passed to the model. The
+  launcher refuses a symlinked credential file and uses owner-only permissions
+  where the operating system supports them.
+- Both workshop apps bind to the local loopback interface and require a random
+  session token. They are not exposed as network services by the launcher.
+- The technical workshop validates editor input, permits only function
+  definitions and a small Python/JSON surface, and exposes no import, file,
+  shell, credential, or network primitive. Those editors still execute the
+  participant's Python in the local notebook process; use code you wrote or
+  understand. They are not a hardened sandbox for untrusted third-party code.
+- Model-requested tool names and arguments are untrusted. A deterministic
+  allowlist and registered-handler check decide what runs, and all workshop
+  tools operate only on in-memory fictional data. No repository is patched and
+  nothing is deployed.
+- Hosted inference consumes the participant's W&B credits. The notebooks show
+  the call count before evaluation and require explicit confirmation before the
+  high-call steps.
+
 ## Local verification
 
 ```bash
@@ -212,6 +258,7 @@ agent-loop-workshop/
 ├── pyproject.toml
 ├── start_workshop.py
 ├── technical_lab.py
+├── technical_lab_core.py
 ├── uv.lock
 ├── workshop.py
 └── workshop_core.py

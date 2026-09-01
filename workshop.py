@@ -743,11 +743,14 @@ def _(core, html, mo, v1_evaluation, v2_evaluation, v2_evaluation_error):
             _lines.append(
                 f"| {_row['case']} | **{_row['v1_gate'].upper()}** | **{_row['v2_gate'].upper()}** | {_row['v1_judge'].upper()} | {_row['v2_judge'].upper()} |"
             )
-        _url = html.escape(v2_evaluation["evaluation_url"], quote=True)
+        _url = html.escape(
+            core.evaluation_comparison_url(v1_evaluation, v2_evaluation),
+            quote=True,
+        )
         _view = mo.vstack(
             [
                 mo.Html(
-                    f'<div class="loop-receipt"><b>Version 2 evaluation run complete.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open it and compare with the Version 1 baseline run in Weave ↗</a></div>'
+                    f'<div class="loop-receipt"><b>Version 2 evaluation run complete.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the V1 baseline and V2 comparison in Weave ↗</a></div>'
                 ),
                 mo.md("\n".join(_lines)),
                 mo.Html(

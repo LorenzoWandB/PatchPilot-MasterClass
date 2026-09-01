@@ -6,7 +6,8 @@ import argparse
 import getpass
 import os
 import re
-import subprocess
+# The launcher executes one fixed argv list without a shell.
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
@@ -18,6 +19,7 @@ WORKSHOP_PATH = ROOT / "workshop.py"
 TECHNICAL_LAB_PATH = ROOT / "technical_lab.py"
 DEFAULT_PROJECT = "agent-loop-workshop"
 DEFAULT_MODEL = "openai/gpt-oss-20b"
+LOCAL_HOST = "127.0.0.1"
 SAFE_SLUG = re.compile(r"^[A-Za-z0-9_.-]+$")
 SAFE_MODEL = re.compile(r"^[A-Za-z0-9_./-]+$")
 
@@ -203,17 +205,19 @@ def configure(*, force: bool = False) -> dict[str, str]:
 
 
 def build_launch_command(*, technical: bool = False, headless: bool = False) -> list[str]:
-    """Build the Marimo command for the guided app or editable technical lab."""
+    """Build the Marimo command for either rendered workshop app."""
 
     notebook_path = TECHNICAL_LAB_PATH if technical else WORKSHOP_PATH
-    mode = "edit" if technical else "run"
     command = [
         sys.executable,
         "-m",
         "marimo",
-        mode,
+        "run",
         str(notebook_path),
         "--no-sandbox",
+        "--host",
+        LOCAL_HOST,
+        "--token",
     ]
     if headless:
         command.append("--headless")
@@ -242,12 +246,15 @@ def main() -> int:
     parser.add_argument(
         "--technical",
         action="store_true",
-        help="Open the optional technical lab in editable mode.",
+        help="Open the standalone 90-minute interactive technical workshop.",
     )
     arguments = parser.parse_args()
 
     try:
         values = configure(force=arguments.reset)
+    except KeyboardInterrupt:
+        print("\nSetup stopped. No credential was displayed.", file=sys.stderr)
+        return 130
     except (OSError, RuntimeError, ValueError) as error:
         print(f"\nSetup could not continue: {error}", file=sys.stderr)
         return 2
@@ -259,7 +266,10 @@ def main() -> int:
     print("  API key: saved privately (not displayed)")
 
     if arguments.configure_only:
-        print("\nNext: uv run --locked python start_workshop.py")
+        next_command = "uv run --locked python start_workshop.py"
+        if arguments.technical:
+            next_command += " --technical"
+        print(f"\nNext: {next_command}")
         return 0
 
     notebook_path = TECHNICAL_LAB_PATH if arguments.technical else WORKSHOP_PATH
@@ -268,10 +278,10 @@ def main() -> int:
         return 2
 
     if arguments.technical:
-        print("\nOpening the optional Agent Loop Technical Lab in editable mode.")
+        print("\nOpening the standalone Agent Loop Technical Workshop (90 minutes).")
         print(
-            "Click Run all in the bottom-right, then click Verify W&B, Weave, "
-            "and judge access.\n"
+            "The guided app contains four executable Python exercises—no Run all step. "
+            "The core path makes 21 hosted model calls.\n"
         )
     else:
         print("\nStarting the Agent Loop Workshop. Keep this terminal open during the workshop.")
@@ -281,11 +291,12 @@ def main() -> int:
         headless=arguments.headless,
     )
     try:
+        # The argv contains only fixed local paths and validated flags.
         completed = subprocess.run(
             command,
             cwd=ROOT,
             check=False,
-        )
+        )  # nosec B603
     except KeyboardInterrupt:
         print("\nWorkshop stopped.")
         return 130
