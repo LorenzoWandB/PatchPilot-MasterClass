@@ -110,7 +110,7 @@ The notebook uses three explicit readiness states:
 After verification, use **Open the project in Weave** to confirm that the
 browser is also signed in. Browser access cannot be proven by the API preflight.
 
-## Start the workshop
+## Start the main guided workshop
 
 Clone the repository, enter the folder, and run the guided launcher:
 
@@ -141,7 +141,36 @@ uv run --locked python start_workshop.py --reset
 
 Manual setup is also available by copying `.env.example` to `.env`.
 
-## Standalone technical workshop
+## Workshop control contract
+
+The comparison is intentionally controlled:
+
+| Held fixed | Changed |
+| --- | --- |
+| Dataset contents and fingerprint | PatchPilot agent version |
+| Three custom Python scorers with deterministic logic | Patch strategy |
+| LLM-judge rubric | Customer-boundary behavior |
+| Judge model | Agent metadata shown in Weave |
+| Human-in-the-loop policy | Agent output for affected cases |
+
+Version 1 uses `ticket_ids_only`. Version 2 uses `tenant_scoped` and adds the
+requesting-customer constraint.
+
+The expected deterministic story is:
+
+| Case | Version 1 | Version 2 |
+| --- | --- | --- |
+| Normal bulk close | Pass | Pass |
+| Participant mixed-customer case | Block | Pass |
+| Retried delivery | Pass | Pass |
+| Missing evidence | Human review | Human review |
+
+The LLM judge is live and may vary. The workshop requests structured JSON; if a
+model response is malformed, that row is preserved as **needs human review**
+instead of failing the evaluation. Participants inspect its rubric, evidence,
+criteria, and reasons in Weave.
+
+## Optional standalone technical workshop
 
 The repository also contains one consolidated, interactive 90-minute workshop for
 Python developers. It stands on its own; participants do not need to complete
@@ -179,35 +208,6 @@ on the core path.
 The W&B and Weave preflight does not make a model call. A take-home full rerun
 with a revised rubric adds 20 calls and must use a separately named evaluation
 contract.
-
-## Workshop control contract
-
-The comparison is intentionally controlled:
-
-| Held fixed | Changed |
-| --- | --- |
-| Dataset contents and fingerprint | PatchPilot agent version |
-| Three custom Python scorers with deterministic logic | Patch strategy |
-| LLM-judge rubric | Customer-boundary behavior |
-| Judge model | Agent metadata shown in Weave |
-| Human-in-the-loop policy | Agent output for affected cases |
-
-Version 1 uses `ticket_ids_only`. Version 2 uses `tenant_scoped` and adds the
-requesting-customer constraint.
-
-The expected deterministic story is:
-
-| Case | Version 1 | Version 2 |
-| --- | --- | --- |
-| Normal bulk close | Pass | Pass |
-| Participant mixed-customer case | Block | Pass |
-| Retried delivery | Pass | Pass |
-| Missing evidence | Human review | Human review |
-
-The LLM judge is live and may vary. The workshop requests structured JSON; if a
-model response is malformed, that row is preserved as **needs human review**
-instead of failing the evaluation. Participants inspect its rubric, evidence,
-criteria, and reasons in Weave.
 
 ## Security and data handling
 
