@@ -16,6 +16,10 @@ The guided path follows one repeatable interaction pattern throughout:
 > Create it in the notebook → open it in Weave → inspect the evidence → use it
 > to create the next artifact
 
+> **After the workshop:** Apply the Agent Loop to a new use case through the
+> [MasterClass certificate project](certificate-project/README.md). Choose the
+> non-technical design track or the technical implementation track.
+
 ## The scenario
 
 BeeVerse Market runs merchant-support software. A broken bulk-close workflow
