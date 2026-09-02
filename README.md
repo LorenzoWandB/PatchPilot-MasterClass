@@ -11,6 +11,11 @@ improvement loop:
 The business scenario is fictional. The W&B Weave traces, calls, dataset,
 evaluation runs, annotations, and W&B Serverless Inference judge calls are real.
 
+The guided path follows one repeatable interaction pattern throughout:
+
+> Create it in the notebook → open it in Weave → inspect the evidence → use it
+> to create the next artifact
+
 ## The scenario
 
 BeeVerse Market runs merchant-support software. A broken bulk-close workflow
@@ -87,6 +92,10 @@ that layer so the room can focus on evaluation evidence.
 No participant edits Python during the main path. Technical attendees can read
 the code examples while everyone else uses labeled controls and follows the
 facilitator.
+
+Every successful creation step displays a numbered receipt and a direct Weave
+link. The opening policy and final structured choices are saved in the final
+review record; there are no disposable free-text reflection boxes.
 
 ## Prepare before the workshop
 
@@ -226,6 +235,12 @@ participants to complete a dataset case, bounded tool dispatcher, two traced
 safety tools, and a deterministic scorer. Visible fixtures gate hosted calls,
 and the participant-authored dispatcher, tools, and scorer are used by the live
 V2/V3 comparison. There is no separate technical or solution notebook.
+
+The four **Validate … locally** buttons compile or parse the participant's
+current editor content and display an explicit fixture count immediately below
+the button. These checks do not call a model or create a Weave artifact. The
+later live trace and evaluation actions are the points that create Weave Calls
+and evaluation runs.
 
 The core path makes 21 hosted model calls per participant:
 

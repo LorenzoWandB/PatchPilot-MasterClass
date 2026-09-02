@@ -80,6 +80,7 @@ def _(mo):
           <p>Follow one PatchPilot coding agent from a green-looking patch to a measured improvement—and decide where a person should remain in the loop.</p>
           <div class="loop-rail">RUN → TRACE → BUILD A DATASET → EVALUATE → IMPROVE → COMPARE → DECIDE</div>
           <p><b>W&amp;B Weave</b> is an observability and evaluation platform that helps teams track, evaluate, and improve AI applications.</p>
+          <div class="loop-panel mint"><b>How you will work</b><br>Each chapter creates a real piece of evidence, gives you a direct Weave link, and pauses so you can inspect it in the UI. The scenario and application versions are prepared; the trace, annotation, dataset, evaluation runs, live judge calls, comparison, and review record are real.</div>
           <p class="loop-small">PatchPilot and BeeVerse Market are fictional. The Weave traces, calls, dataset, evaluation runs, annotations, and live W&amp;B Inference judge calls are real.</p>
         </header>
         """
@@ -194,12 +195,12 @@ def _(mo):
             "Keep the agent blocked": "block",
         },
         value="Require human review",
-        label="Before seeing more evidence, what should happen?",
+        label="Starting human-review policy",
     )
     mo.vstack(
         [
             mo.Html(
-                '<section class="loop-page"><div class="loop-kicker">Opening decision</div><h2>The visible checks passed. Is that enough?</h2><p>You are the cross-functional reviewer: connect the business requirement to the engineering evidence.</p><div class="loop-do"><b>Your turn · 1 minute</b><br>Make the initial human-in-the-loop decision before seeing more evidence.</div></section>'
+                '<section class="loop-page"><div class="loop-kicker">Opening position</div><h2>Set a starting policy—then test it against the evidence</h2><p>You are the cross-functional reviewer: connect the business requirement to the engineering evidence.</p><div class="loop-do"><b>Set the starting policy · 1 minute</b><br>This structured choice is carried into the final Weave review record so you can compare your position before and after the evidence.</div></section>'
             ),
             initial_decision,
         ]
@@ -289,7 +290,7 @@ def _(html, mo, trace_error, trace_receipt):
     if trace_receipt:
         _url = html.escape(trace_receipt["trace_url"], quote=True)
         _view = mo.Html(
-            f'<div class="loop-receipt"><b>Version 1 trace saved.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the trace in Weave ↗</a><br><span class="loop-small">Find the input, the child calls, the query filter, and what the visible checks did not cover.</span></div>'
+            f'<div class="loop-receipt"><b>Artifact 1 created · Version 1 trace.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open Artifact 1 in Weave ↗</a><br><span class="loop-small">Find the input, the child calls, the query filter, and what the visible checks did not cover.</span></div>'
         )
     elif trace_error:
         _view = mo.Html(
@@ -314,13 +315,13 @@ def _(mo, trace_receipt):
         label="What is the primary risk you observed?",
     )
     save_risk_button = mo.ui.run_button(
-        label="Save this annotation to the trace",
+        label="Create the trace annotation",
         disabled=trace_receipt is None,
     )
     mo.vstack(
         [
             mo.Html(
-                '<div class="loop-do"><b>Your turn · 1 minute</b><br>Select the risk supported by the trace. This becomes a structured human annotation attached to the root Call in Weave, and it guides the dataset case we build next.</div>'
+                '<div class="loop-do"><b>Create Artifact 2 · 1 minute</b><br>Select the risk supported by the trace, then attach it as structured human feedback to the root Call in Weave. This annotation guides the dataset case we build next.</div>'
             ),
             observed_risk,
             save_risk_button,
@@ -346,8 +347,9 @@ def _(core, observed_risk, save_risk_button, trace_receipt):
 @app.cell(hide_code=True)
 def _(html, mo, risk_annotation_error, risk_annotation_receipt):
     if risk_annotation_receipt:
+        _url = html.escape(risk_annotation_receipt["target_url"], quote=True)
         _view = mo.Html(
-            '<div class="loop-receipt"><b>Annotation saved.</b> The human observation now sits beside the machine-generated trace.</div>'
+            f'<div class="loop-receipt"><b>Artifact 2 created · Trace annotation.</b> The human observation now sits beside the machine-generated trace. <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the annotated Call in Weave ↗</a></div>'
         )
     elif risk_annotation_error:
         _view = mo.Html(
@@ -395,7 +397,7 @@ def _(mo):
     mo.vstack(
         [
             mo.Html(
-                '<div class="loop-do"><b>Your turn · 2 minutes</b><br>Configure the customer-boundary case. You are changing structured test inputs—not writing an answer that disappears when the notebook closes.</div>'
+                '<div class="loop-do"><b>Build the test case · 2 minutes</b><br>Configure the customer-boundary case. These controls change the structured test inputs that will become part of a versioned Weave dataset.</div>'
             ),
             source_strategy,
             boundary_shape,
@@ -447,7 +449,7 @@ Dataset fingerprint: `{dataset_version}`
 @app.cell(hide_code=True)
 def _(connection_verified, mo):
     publish_dataset_button = mo.ui.run_button(
-        label="Publish this dataset to Weave",
+        label="Create the four-case dataset in Weave",
         disabled=not connection_verified,
     )
     publish_dataset_button
@@ -471,7 +473,7 @@ def _(dataset_error, dataset_receipt, html, mo):
     if dataset_receipt:
         _url = html.escape(dataset_receipt["dataset_url"], quote=True)
         _view = mo.Html(
-            f'<div class="loop-receipt"><b>Dataset published.</b> {dataset_receipt["row_count"]} cases · version <code>{dataset_receipt["fingerprint"]}</code> · <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the dataset in Weave ↗</a></div>'
+            f'<div class="loop-receipt"><b>Artifact 3 created · Versioned dataset.</b> {dataset_receipt["row_count"]} cases · fingerprint <code>{dataset_receipt["fingerprint"]}</code> · <a href="{_url}" target="_blank" rel="noopener noreferrer">Open Artifact 3 in Weave ↗</a><br><span class="loop-small">Inspect the four rows, their requests and expected behavior, and the dataset version before evaluating either application.</span></div>'
         )
     elif dataset_error:
         _view = mo.Html(
@@ -516,7 +518,7 @@ def _(core, mo):
     mo.vstack(
         [
             mo.Html(
-                '<div class="loop-do"><b>Your turn · 2 minutes</b><br>Review the three fixed checks and confirm the comparison contract. Keep all three selected for the shared workshop path.</div>'
+                '<div class="loop-do"><b>Configure the evaluation · 2 minutes</b><br>Review the three deterministic checks and the fixed comparison contract. The next action will combine them with the live LLM judge and create the Version 1 evaluation run.</div>'
             ),
             deterministic_scorers,
             freeze_evaluation,
@@ -597,7 +599,7 @@ def _(deterministic_scorers):
 
 
 @app.cell(hide_code=True)
-def _(connection_verified, dataset_receipt, freeze_evaluation, mo, scorer_ids):
+def _(connection_verified, dataset_receipt, dataset_rows, freeze_evaluation, mo, scorer_ids):
     evaluation_ready = bool(
         connection_verified
         and dataset_receipt
@@ -605,7 +607,7 @@ def _(connection_verified, dataset_receipt, freeze_evaluation, mo, scorer_ids):
         and scorer_ids
     )
     run_v1_evaluation_button = mo.ui.run_button(
-        label="Run the Version 1 evaluation",
+        label=f"Create the V1 baseline evaluation ({len(dataset_rows)} live judge calls)",
         disabled=not evaluation_ready,
     )
     run_v1_evaluation_button
@@ -643,7 +645,7 @@ def _(html, mo, v1_evaluation, v1_evaluation_error):
         _view = mo.vstack(
             [
                 mo.Html(
-                    f'<div class="loop-receipt"><b>Version 1 evaluation run complete.</b> Three Python scorers with deterministic logic plus {v1_evaluation["judge_calls"]} live judge calls. <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the evaluation run in Weave ↗</a></div>'
+                    f'<div class="loop-receipt"><b>Artifact 4 created · Version 1 baseline evaluation run.</b> Three deterministic Python scorers plus {v1_evaluation["judge_calls"]} live LLM-judge calls. <a href="{_url}" target="_blank" rel="noopener noreferrer">Open Artifact 4 in Weave ↗</a></div>'
                 ),
                 mo.md("\n".join(_lines)),
                 mo.Html(
@@ -708,9 +710,9 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(evaluation_ready, mo, v1_evaluation):
+def _(dataset_rows, evaluation_ready, mo, v1_evaluation):
     run_v2_evaluation_button = mo.ui.run_button(
-        label="Run the Version 2 evaluation with the same setup",
+        label=f"Create the V2 evaluation with the same setup ({len(dataset_rows)} live judge calls)",
         disabled=not (evaluation_ready and v1_evaluation),
     )
     run_v2_evaluation_button
@@ -750,7 +752,7 @@ def _(core, html, mo, v1_evaluation, v2_evaluation, v2_evaluation_error):
         _view = mo.vstack(
             [
                 mo.Html(
-                    f'<div class="loop-receipt"><b>Version 2 evaluation run complete.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the V1 baseline and V2 comparison in Weave ↗</a></div>'
+                    f'<div class="loop-receipt"><b>Artifact 5 created · Version 2 evaluation run.</b> <a href="{_url}" target="_blank" rel="noopener noreferrer">Open the V1 baseline and V2 comparison in Weave ↗</a><br><span class="loop-small">The dataset, deterministic scorers, rubric, and judge model stayed fixed; only the PatchPilot application version changed.</span></div>'
                 ),
                 mo.md("\n".join(_lines)),
                 mo.Html(
@@ -793,7 +795,7 @@ def _(mo, v2_evaluation):
         value="No automatic operation",
         label="Approved scope",
     )
-    reviewer = mo.ui.text(value="Workshop participant", label="Reviewer")
+    reviewer = "Workshop participant"
     save_decision_button = mo.ui.run_button(
         label="Save the human-in-the-loop decision",
         disabled=v2_evaluation is None,
@@ -801,12 +803,11 @@ def _(mo, v2_evaluation):
     mo.vstack(
         [
             mo.Html(
-                '<section class="loop-page"><div class="loop-kicker">Chapter 5 · Decide</div><h2>Use evidence to set the human-in-the-loop boundary</h2><div class="loop-do"><b>Your turn · 2 minutes</b><br>Record the decision, confidence, and operating scope. These annotations persist in Weave.</div></section>'
+                '<section class="loop-page"><div class="loop-kicker">Chapter 5 · Decide</div><h2>Use evidence to set the human-in-the-loop boundary</h2><div class="loop-do"><b>Create Artifact 6 · 2 minutes</b><br>Set the decision, confidence, and operating scope, then save the review record and annotations in Weave.</div></section>'
             ),
             final_decision,
             confidence,
             permitted_scope,
-            reviewer,
             save_decision_button,
         ]
     )
@@ -842,7 +843,7 @@ async def _(
                     "rubric_id": rubric["rubric_id"],
                     "reviewed_versions": ["v1", "v2"],
                     "permitted_scope": permitted_scope.value,
-                    "reviewer": reviewer.value,
+                    "reviewer": reviewer,
                     "confidence": confidence.value,
                     "trace_call_id": trace_receipt["call_id"],
                 }
@@ -862,7 +863,7 @@ def _(decision_error, decision_receipt, html, mo):
             else ""
         )
         _view = mo.Html(
-            f'<div class="loop-receipt"><b>Human-in-the-loop record saved.</b> <a href="{_record_url}" target="_blank" rel="noopener noreferrer">Open the review record in Weave ↗</a>{_annotation_note}</div>'
+            f'<div class="loop-receipt"><b>Artifact 6 created · Human-in-the-loop review record.</b> <a href="{_record_url}" target="_blank" rel="noopener noreferrer">Open Artifact 6 in Weave ↗</a>{_annotation_note}</div>'
         )
     elif decision_error:
         _view = mo.Html(

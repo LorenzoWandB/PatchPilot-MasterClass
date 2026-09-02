@@ -388,7 +388,7 @@ def _(mo):
         max_height=680,
         label="Your Python: add the fifth evaluation case",
     )
-    fifth_case_form = _editor.form(submit_button_label="Check dataset case")
+    fifth_case_form = _editor.form(submit_button_label="Validate dataset case locally")
     fifth_case_form
     return fifth_case_default_source, fifth_case_form
 
@@ -418,17 +418,30 @@ def _(fifth_case, lab):
 
 
 @app.cell(hide_code=True)
-def _(core, fifth_case_check, fifth_case_error, lab_rows, mo):
+def _(core, fifth_case_check, fifth_case_error, fifth_case_form, lab_rows, mo):
+    mo.stop(
+        fifth_case_form.value is None,
+        mo.Html(
+            '<div class="lab-panel amber"><b>Local check not run yet.</b><br>'
+            'Click <b>Validate dataset case locally</b>. The checkpoint will appear here; '
+            'this step does not create a Weave artifact or call a model.</div>'
+        ),
+    )
     _lines = ["| Dataset checkpoint | Result |", "|---|---:|"]
     for _check in fifth_case_check["checks"]:
         _lines.append(
             f"| {_check['check']} | {'PASS' if _check['passed'] else 'FIX'} |"
         )
     _titles = "\n".join(f"- **{row['title']}**" for row in lab_rows)
+    _passed = sum(check["passed"] for check in fifth_case_check["checks"])
+    _total = len(fifth_case_check["checks"])
     _parse_result = (
         mo.Html(f'<div class="lab-error"><b>Fix the Python literal</b><br>{fifth_case_error}</div>')
         if fifth_case_error
-        else mo.Html('<div class="lab-receipt"><b>Literal parsed safely.</b> No participant text was executed.</div>')
+        else mo.Html(
+            f'<div class="lab-receipt"><b>Local dataset fixtures completed: {_passed} of {_total} passed.</b> '
+            'No participant text was executed, no model was called, and no Weave artifact was created.</div>'
+        )
     )
     mo.vstack(
         [
@@ -503,7 +516,7 @@ def _(mo):
         max_height=820,
         label="Your Python: complete dispatch_tool_calls",
     )
-    dispatcher_form = _editor.form(submit_button_label="Run dispatcher fixtures")
+    dispatcher_form = _editor.form(submit_button_label="Validate dispatcher locally")
     mo.vstack(
         [
             mo.Html(
@@ -543,13 +556,23 @@ def _(dispatcher_default_source, dispatcher_form, json, lab):
 
 
 @app.cell(hide_code=True)
-def _(dispatcher_check, dispatcher_compile_error, html, mo):
+def _(dispatcher_check, dispatcher_compile_error, dispatcher_form, html, mo):
+    mo.stop(
+        dispatcher_form.value is None,
+        mo.Html(
+            '<div class="lab-panel amber"><b>Local check not run yet.</b><br>'
+            'Click <b>Validate dispatcher locally</b>. Five fixture results will appear here; '
+            'this step does not create a Weave artifact or call a model.</div>'
+        ),
+    )
     _lines = ["| Dispatcher fixture | Result | Detail |", "|---|---:|---|"]
     for _row in dispatcher_check["rows"]:
         _lines.append(
             f"| {_row['fixture']} | {'PASS' if _row['passed'] else 'FIX'} | "
             f"{_row['detail']} |"
         )
+    _passed = sum(row["passed"] for row in dispatcher_check["rows"])
+    _total = len(dispatcher_check["rows"])
     _status = (
         mo.Html(
             '<div class="lab-error"><b>Dispatcher did not compile</b><br>'
@@ -557,8 +580,8 @@ def _(dispatcher_check, dispatcher_compile_error, html, mo):
         )
         if dispatcher_compile_error
         else mo.Html(
-            '<div class="lab-receipt"><b>Dispatcher loaded.</b> '
-            'Behavior—not syntax—is graded by the fixtures.</div>'
+            f'<div class="lab-receipt"><b>Local dispatcher fixtures completed: {_passed} of {_total} passed.</b> '
+            'Behavior—not syntax—is graded here; no model was called and no Weave artifact was created.</div>'
         )
     )
     mo.vstack([_status, mo.md("### Dispatcher checkpoint"), mo.md("\n".join(_lines))])
@@ -597,7 +620,7 @@ def exercise_retry_path(request, application, arguments):
         max_height=460,
         label="Your Python: implement the V3 safety tools",
     )
-    safety_tools_form = _editor.form(submit_button_label="Run safety-tool fixtures")
+    safety_tools_form = _editor.form(submit_button_label="Validate safety tools locally")
     safety_tools_form
     return safety_tools_default_source, safety_tools_form
 
@@ -655,8 +678,17 @@ def _(
     mo,
     safety_tools_check,
     safety_tools_compile_error,
+    safety_tools_form,
     tool_registry_check,
 ):
+    mo.stop(
+        safety_tools_form.value is None,
+        mo.Html(
+            '<div class="lab-panel amber"><b>Local check not run yet.</b><br>'
+            'Click <b>Validate safety tools locally</b>. The checkpoint will appear here; '
+            'this step does not create a Weave artifact or call a model.</div>'
+        ),
+    )
     _lines = ["| Safety-tool fixture | Result |", "|---|---:|"]
     for _check in safety_tools_check["checks"]:
         _lines.append(
@@ -667,6 +699,9 @@ def _(
             f"| Registry: {_check['check']} | {'PASS' if _check['passed'] else 'FIX'} |"
         )
     _error = safety_tools_compile_error or safety_tools_check.get("error", "")
+    _passed = sum(check["passed"] for check in safety_tools_check["checks"])
+    _passed += sum(check["passed"] for check in tool_registry_check["checks"])
+    _total = len(safety_tools_check["checks"]) + len(tool_registry_check["checks"])
     _status = (
         mo.Html(
             '<div class="lab-error"><b>Safety tools need attention</b><br>'
@@ -674,8 +709,8 @@ def _(
         )
         if _error
         else mo.Html(
-            '<div class="lab-receipt"><b>Safety tools loaded.</b> '
-            'The fixtures below determine whether their evidence is usable.</div>'
+            f'<div class="lab-receipt"><b>Local safety-tool fixtures completed: {_passed} of {_total} passed.</b> '
+            'No model was called and no Weave artifact was created.</div>'
         )
     )
     mo.vstack([_status, mo.md("### Safety-tool checkpoint"), mo.md("\n".join(_lines))])
@@ -734,7 +769,7 @@ def _(mo):
         max_height=720,
         label="Your Python: complete evidence_completeness_status",
     )
-    scorer_form = _editor.form(submit_button_label="Run scorer fixtures")
+    scorer_form = _editor.form(submit_button_label="Validate scorer locally")
     scorer_form
     return scorer_default_source, scorer_form
 
@@ -771,7 +806,15 @@ def _(lab, scorer_default_source, scorer_form, weave):
 
 
 @app.cell(hide_code=True)
-def _(evidence_scorer_check, html, mo, scorer_compile_error):
+def _(evidence_scorer_check, html, mo, scorer_compile_error, scorer_form):
+    mo.stop(
+        scorer_form.value is None,
+        mo.Html(
+            '<div class="lab-panel amber"><b>Local check not run yet.</b><br>'
+            'Click <b>Validate scorer locally</b>. The pass/fail/unknown fixtures will appear here; '
+            'this step does not create a Weave artifact or call a model.</div>'
+        ),
+    )
     _lines = [
         "| Scorer fixture | Expected | Actual | Result |",
         "|---|---:|---:|---:|",
@@ -781,6 +824,8 @@ def _(evidence_scorer_check, html, mo, scorer_compile_error):
             f"| {_row['fixture']} | {_row['expected'].upper()} | "
             f"{_row['actual'].upper()} | {'PASS' if _row['passed'] else 'FIX'} |"
         )
+    _passed = sum(row["passed"] for row in evidence_scorer_check["rows"])
+    _total = len(evidence_scorer_check["rows"])
     _status = (
         mo.Html(
             '<div class="lab-error"><b>Scorer did not compile</b><br>'
@@ -788,8 +833,8 @@ def _(evidence_scorer_check, html, mo, scorer_compile_error):
         )
         if scorer_compile_error
         else mo.Html(
-            '<div class="lab-receipt"><b>Scorer loaded.</b> '
-            'The fixtures verify its semantics below.</div>'
+            f'<div class="lab-receipt"><b>Local scorer fixtures completed: {_passed} of {_total} passed.</b> '
+            'No model was called and no Weave artifact was created.</div>'
         )
     )
     mo.vstack([_status, mo.md("### Scorer checkpoint"), mo.md("\n".join(_lines))])
