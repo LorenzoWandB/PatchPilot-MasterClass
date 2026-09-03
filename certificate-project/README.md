@@ -10,9 +10,6 @@ You will define what good behavior means, identify the evidence needed to
 measure it, design an evaluation, compare two application versions, and set a
 human-in-the-loop policy.
 
-Submit a **5–7 minute video walkthrough** to MasterClass. You do not submit your
-project to this GitHub repository.
-
 ## Choose one track
 
 | Track | Best for | What you produce | Expected effort |
@@ -20,24 +17,29 @@ project to this GitHub repository.
 | [Evaluation Designer](NON_TECHNICAL_TRACK.md) | Learners who do not want to write Python | A completed evaluation design with cases, scorer rules, a judge rubric, a manual comparison, and an operating policy | 45–60 minutes |
 | [Evaluation Builder](TECHNICAL_TRACK.md) | Learners comfortable writing and running Python | A working, traced AI application with a Weave dataset, scorers, two evaluation runs, and a comparison | 2–4 hours |
 
-Both tracks are graded against the same evaluation skills. Writing more code
-does not compensate for a weak evaluation design.
+Both tracks demonstrate the same evaluation skills. Writing more code does not
+compensate for a weak evaluation design.
+
+## Helpful references
+
+- Start with the [beginner glossary](GLOSSARY.md) when a term is unfamiliar.
+- Review the [completed example](EXAMPLE_COMPLETED_EVALUATION.md) to see the
+  expected level of detail. Use its structure, but create your own project.
 
 ## Start here
 
-1. Read the [use-case options](USE_CASE_OPTIONS.md).
-2. Choose a scenario other than BeeVerse/PatchPilot.
-3. Copy [the evaluation design template](EVALUATION_DESIGN_TEMPLATE.md) into a
+1. Read the [beginner glossary](GLOSSARY.md) and
+   [completed example](EXAMPLE_COMPLETED_EVALUATION.md).
+2. Read the [use-case options](USE_CASE_OPTIONS.md).
+3. Choose a scenario other than BeeVerse/PatchPilot.
+4. Copy [the evaluation design template](EVALUATION_DESIGN_TEMPLATE.md) into a
    new local file and complete it as you work.
-4. Follow either the
+5. Follow either the
    [non-technical instructions](NON_TECHNICAL_TRACK.md) or the
    [technical instructions](TECHNICAL_TRACK.md).
-5. Check your work against the [grading rubric](GRADING_RUBRIC.md).
-6. Record and submit your 5–7 minute video through MasterClass.
 
 You may complete the Markdown template in a text editor, move its headings into
-a document or slide tool, or use an equivalent format. Only the video is
-submitted unless MasterClass gives you different submission instructions.
+a document or slide tool, or use an equivalent format.
 
 ## Requirements shared by both tracks
 
@@ -106,7 +108,7 @@ Define:
 
 ## How to determine whether your evaluation is good
 
-Your walkthrough should answer these questions:
+Your completed project should answer these questions:
 
 - Does the evaluation measure the stated business outcome?
 - Does it detect the known unsafe behavior?
@@ -122,21 +124,6 @@ An evaluation is incomplete if it reports only an average, relies entirely on
 an LLM judge, silently passes missing evidence, or changes the test conditions
 between versions.
 
-## Video requirements
-
-Your 5–7 minute video must:
-
-1. Identify your selected track and use case.
-2. Explain the agent, intended outcome, and unacceptable harm.
-3. Show the trace or trace design and the evidence it records.
-4. Walk through representative dataset cases.
-5. Explain the deterministic scorers and LLM-judge rubric.
-6. Compare Version 1 and Version 2 under the fixed evaluation contract.
-7. Defend the automate, review, and block policy.
-
-Technical submissions must also show relevant code, passing local assertions,
-one nested Weave trace, and the V1/V2 evaluation comparison.
-
 ## Privacy and security
 
 Use fictional or sanitized data. Do not show or include:
@@ -147,13 +134,14 @@ Use fictional or sanitized data. Do not show or include:
 - Real customer, employee, financial, health, or legal data.
 - Confidential prompts, documents, or source code.
 
-If a credential appears in a recording, stop, rotate the credential, remove the
-recording, and record the walkthrough again.
+If a credential appears in any project artifact or Weave trace, remove it,
+rotate the credential, and verify that the replacement artifact is safe before
+sharing it.
 
 ## Final checklist
 
 - [ ] I used a new use case rather than BeeVerse/PatchPilot.
-- [ ] I identified my track at the start of the video.
+- [ ] I selected either the Evaluation Designer or Evaluation Builder track.
 - [ ] I defined the agent, success outcome, harm, and human-review conditions.
 - [ ] I described a root operation and at least two internal Calls.
 - [ ] I created five complete dataset cases.
@@ -161,5 +149,4 @@ recording, and record the walkthrough again.
 - [ ] I compared V1 and V2 under the same evaluation contract.
 - [ ] I covered normal, unsafe, and insufficient-evidence results.
 - [ ] I defined automate, review, and block conditions.
-- [ ] My video is 5–7 minutes and contains no credentials or private data.
-- [ ] I reviewed the grading rubric before submitting to MasterClass.
+- [ ] My project contains no credentials or private data.

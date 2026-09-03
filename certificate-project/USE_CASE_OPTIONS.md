@@ -72,8 +72,8 @@ confidence, and escalation recommendation.
 ### Situation
 
 A finance team uses an AI agent to review employee expenses. The agent reads
-the expense, receipt, policy, and prior submissions, then recommends approval,
-rejection, or human review.
+the expense, receipt, policy, and prior expense records, then recommends
+approval, rejection, or human review.
 
 ### Possible inputs
 
@@ -81,7 +81,7 @@ rejection, or human review.
 - Amount, date, category, and business purpose.
 - Receipt data.
 - Applicable expense policy.
-- Prior or potentially duplicate submissions.
+- Prior or potentially duplicate expense records.
 - Manager or cost-center information.
 
 ### Possible output
@@ -108,7 +108,7 @@ Your own scenario is acceptable when it has all of the following:
 - At least one nuanced requirement suitable for a written rubric.
 - A meaningful reason to distinguish automatic operation, human review, and
   blocking.
-- Fictional or sanitized data that is safe to show in a video.
+- Fictional or sanitized data that is safe to include in the project.
 
 Prefer a narrow workflow over a broad assistant. For example, “recommend a
 refund for one order” is easier to evaluate than “improve customer service.”

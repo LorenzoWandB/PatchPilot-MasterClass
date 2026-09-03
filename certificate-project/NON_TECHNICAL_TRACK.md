@@ -10,7 +10,11 @@ You do not need to implement the agent, call a live model, or create a new W&B
 project. You do need to be precise enough that a technical team could implement
 your design without guessing what “good” means.
 
-Expected effort: **45–60 minutes**, followed by a **5–7 minute video**.
+Expected effort: **45–60 minutes**.
+
+Before starting, use the [beginner glossary](GLOSSARY.md) for unfamiliar terms
+and review the [completed example](EXAMPLE_COMPLETED_EVALUATION.md) for the
+expected level of detail.
 
 ## What you will prepare
 
@@ -145,7 +149,7 @@ Explain whether your design:
 - Produces enough explanation to diagnose a failure.
 
 If it does not, revise the cases, evidence plan, or scorer definitions before
-recording the video.
+finalizing the project.
 
 ## 8. Set the human-in-the-loop policy
 
@@ -161,18 +165,16 @@ State:
 The policy should follow from the evaluation. Avoid an unsupported blanket
 claim that the agent is either completely safe or completely unusable.
 
-## Video outline
+## Recommended final review order
 
-Use this structure to stay within 5–7 minutes:
+Review your completed artifact in this order:
 
-1. **Use case and risk — 45 seconds.**
-2. **Trace and required evidence — 45 seconds.**
-3. **Five dataset cases — 60 seconds.**
-4. **Deterministic scorers and judge rubric — 90 seconds.**
-5. **V1/V2 manual comparison — 90 seconds.**
-6. **Human-in-the-loop policy — 45 seconds.**
+1. Use case, business outcome, and unacceptable harm.
+2. Trace design and required evidence.
+3. Five dataset cases.
+4. Deterministic scorers and LLM-judge rubric.
+5. V1/V2 manual comparison.
+6. Human-in-the-loop policy.
 
-Show the completed brief while explaining it. You are graded on the clarity and
-quality of the evaluation design, not presentation polish.
-
-Review [the grading rubric](GRADING_RUBRIC.md) before recording.
+Focus on whether another person could implement and apply the evaluation
+without having to guess what the requirements mean.

@@ -4,6 +4,10 @@ Copy this file and replace every bracketed prompt. Both project tracks should
 use it to plan the evaluation. Non-technical students use the completed file as
 their primary project artifact.
 
+If a term is unfamiliar, use the [beginner glossary](GLOSSARY.md). For a model
+of the expected detail, review the
+[completed example](EXAMPLE_COMPLETED_EVALUATION.md) before starting.
+
 ## Project information
 
 - **Student:** [Name]

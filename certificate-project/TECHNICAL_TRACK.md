@@ -6,9 +6,13 @@ In this track, you will implement the same evaluation-design assignment in
 Python and use W&B Weave to trace and compare two versions of a new AI
 application.
 
-Expected effort: **2–4 hours**, followed by a **5–7 minute video**.
+Expected effort: **2–4 hours**.
 
-The existing technical workshop is a reference, not the final submission. You
+Before starting, use the [beginner glossary](GLOSSARY.md) for unfamiliar terms
+and review the [completed example](EXAMPLE_COMPLETED_EVALUATION.md) for the
+evaluation-design detail expected before implementation.
+
+The existing technical workshop is a reference, not the certificate project. You
 may study and reuse its patterns, but your certificate project must use a new
 scenario rather than BeeVerse/PatchPilot.
 
@@ -137,7 +141,7 @@ Add at least three local assertions or fixtures demonstrating:
 - A failing result.
 - An unknown result caused by missing evidence.
 
-Show the passing assertions in the submission video.
+Keep the passing assertion results with your project output or notes.
 
 ## 6. Implement the LLM judge
 
@@ -194,7 +198,7 @@ Based on the comparison, state:
 - The next evidence needed before expanding automation.
 
 You may record the decision in your project output, a Weave annotation, or a
-traced decision record. The policy must be visible in the video.
+traced decision record. The policy must be documented with the project.
 
 ## Hosted-call and cost warning
 
@@ -222,20 +226,18 @@ evaluation runs.
 - [ ] Insufficient evidence routes to review.
 - [ ] No secrets or real private data appear in code or Weave.
 
-You are not graded on obtaining a predetermined live judge verdict or on making
-the application use every available tool. You are graded on implementation
-correctness, evaluation quality, and accurate interpretation of the behavior
-that was actually recorded.
+A predetermined live judge verdict is not required, and the application does
+not need to use every available tool. Focus on implementation correctness,
+evaluation quality, and accurate interpretation of the behavior that was
+actually recorded.
 
-## Video outline
+## Recommended final review order
 
-Use this structure to stay within 5–7 minutes:
+Review the completed implementation in this order:
 
-1. **Use case, risk, and V1/V2 change — 45 seconds.**
-2. **Relevant application code and nested trace — 60 seconds.**
-3. **Dataset and deterministic scorer assertions — 75 seconds.**
-4. **LLM-judge rubric — 45 seconds.**
-5. **V1/V2 Weave comparison — 90 seconds.**
-6. **Human-in-the-loop policy — 45 seconds.**
-
-Review [the grading rubric](GRADING_RUBRIC.md) before recording.
+1. Use case, risk, and V1/V2 change.
+2. Relevant application code and one nested trace.
+3. Dataset and deterministic scorer assertions.
+4. LLM-judge rubric and one judge Call.
+5. V1/V2 Weave comparison.
+6. Human-in-the-loop policy.
